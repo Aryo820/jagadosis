@@ -1,6 +1,7 @@
+import 'package:aplikasi/screens/meds/tambah_obat.dart';
+import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aplikasi/utils/app_colors.dart';
 
 class MedsPage extends StatelessWidget {
   const MedsPage({super.key});
@@ -27,7 +28,10 @@ class MedsPage extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 4.0,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryContainer.withAlpha(50),
                     borderRadius: BorderRadius.circular(20.0),
@@ -89,7 +93,10 @@ class MedsPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Action to add medication
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TambahObatPage()),
+          );
         },
         backgroundColor: AppColors.medicalBlue,
         foregroundColor: AppColors.surfaceWhite,
@@ -119,7 +126,9 @@ class MedsPage extends StatelessWidget {
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
-          color: hasWarning ? const Color(0xFFEB5757).withAlpha(100) : AppColors.outlineVariant.withAlpha(50),
+          color: hasWarning
+              ? const Color(0xFFEB5757).withAlpha(100)
+              : AppColors.outlineVariant.withAlpha(50),
           width: hasWarning ? 1.5 : 1.0,
         ),
         boxShadow: [
@@ -142,11 +151,7 @@ class MedsPage extends StatelessWidget {
                 color: color.withAlpha(25),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24.0,
-              ),
+              child: Icon(icon, color: color, size: 24.0),
             ),
             const SizedBox(width: 16.0),
             Expanded(
@@ -182,17 +187,25 @@ class MedsPage extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        hasWarning ? Icons.warning_amber_rounded : Icons.inventory_2_outlined,
+                        hasWarning
+                            ? Icons.warning_amber_rounded
+                            : Icons.inventory_2_outlined,
                         size: 14.0,
-                        color: hasWarning ? const Color(0xFFEB5757) : AppColors.textGrey,
+                        color: hasWarning
+                            ? const Color(0xFFEB5757)
+                            : AppColors.textGrey,
                       ),
                       const SizedBox(width: 4.0),
                       Text(
                         remainingStock,
                         style: GoogleFonts.inter(
                           fontSize: 12.0,
-                          fontWeight: hasWarning ? FontWeight.bold : FontWeight.normal,
-                          color: hasWarning ? const Color(0xFFEB5757) : AppColors.textGrey,
+                          fontWeight: hasWarning
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: hasWarning
+                              ? const Color(0xFFEB5757)
+                              : AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -201,7 +214,10 @@ class MedsPage extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.more_vert_rounded, color: AppColors.textGrey),
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                color: AppColors.textGrey,
+              ),
               onPressed: () {},
             ),
           ],

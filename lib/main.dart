@@ -1,4 +1,4 @@
-import 'package:aplikasi/screens/auth/login_page.dart';
+import 'package:aplikasi/screens/splash/splash_screen.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
           primary: AppColors.medicalBlue,
         ),
       ),
-      home: const LoginPage(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -27,7 +27,10 @@ class ProfilePage extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.outlineVariant.withAlpha(80),
-                          border: Border.all(color: AppColors.surfaceWhite, width: 4.0),
+                          border: Border.all(
+                            color: AppColors.surfaceWhite,
+                            width: 4.0,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withAlpha(10),
@@ -53,7 +56,10 @@ class ProfilePage extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.medicalBlue,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.surfaceWhite, width: 2.0),
+                            border: Border.all(
+                              color: AppColors.surfaceWhite,
+                              width: 2.0,
+                            ),
                           ),
                           child: const Icon(
                             Icons.edit_rounded,
@@ -83,7 +89,10 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12.0),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 6.0,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE6F7ED),
                       borderRadius: BorderRadius.circular(20.0),
@@ -157,11 +166,10 @@ class ProfilePage extends StatelessWidget {
               height: 52.0,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushReplacement(
+                  Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginPage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -189,15 +197,18 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingCard(String title, String subtitle, IconData icon, Color accentColor) {
+  Widget _buildSettingCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color accentColor,
+  ) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: AppColors.outlineVariant.withAlpha(50),
-        ),
+        border: Border.all(color: AppColors.outlineVariant.withAlpha(50)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(5),
@@ -224,11 +235,7 @@ class ProfilePage extends StatelessWidget {
                     color: accentColor.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    icon,
-                    color: accentColor,
-                    size: 24.0,
-                  ),
+                  child: Icon(icon, color: accentColor, size: 24.0),
                 ),
                 const SizedBox(width: 16.0),
                 Expanded(
