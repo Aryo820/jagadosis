@@ -1,5 +1,6 @@
-import 'package:aplikasi/screens/auth/register_page.dart';
+import 'package:aplikasi/database/db_helper.dart';
 import 'package:aplikasi/screens/auth/forgot_password_page.dart';
+import 'package:aplikasi/screens/auth/register_page.dart';
 import 'package:aplikasi/screens/dashboard_page.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,31 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+
+  void login() async {
+    if (_formKey.currentState!.validate()) {
+      final String email = _emailController.text.trim();
+      final String password = _passwordController.text;
+
+      final dbService = DatabaseService();
+      final user = await dbService.loginUser(email, password);
+
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email atau Kata Sandi salah'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -297,7 +323,8 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const ForgotPasswordPage(),
+                                      builder: (context) =>
+                                          const ForgotPasswordPage(),
                                     ),
                                   );
                                 },
@@ -324,16 +351,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: double.infinity,
                               height: 52.0,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const DashboardPage(),
-                                      ),
-                                    );
-                                  }
-                                },
+                                onPressed: login,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.medicalBlue,
                                   foregroundColor: AppColors.surfaceWhite,

@@ -1,6 +1,6 @@
 import 'package:aplikasi/screens/history/history_page.dart';
 import 'package:aplikasi/screens/home/home_page.dart';
-import 'package:aplikasi/screens/meds/meds_page.dart';
+import 'package:aplikasi/screens/meds/medicine_page.dart';
 import 'package:aplikasi/screens/profile/profile_page.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -16,34 +16,35 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
 
-  late final List<Widget> _pages;
-
-  @override
-  void initState() {
-    super.initState();
-    _pages = [
-      HomePage(
-        onAddMedTap: () {
-          setState(() {
-            _selectedIndex = 2; // Navigasi ke Meds
-          });
-        },
-        onHistoryTap: () {
-          setState(() {
-            _selectedIndex = 1; // Navigasi ke History
-          });
-        },
-        onFamilyTap: () {
-          // Tindakan tambahan atau navigasi ke Profile/Keluarga
-          setState(() {
-            _selectedIndex = 3; // Navigasi ke Profile
-          });
-        },
-      ),
-      const HistoryPage(),
-      const MedsPage(),
-      const ProfilePage(),
-    ];
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return HomePage(
+          onAddMedTap: () {
+            setState(() {
+              _selectedIndex = 2; // Navigate to Meds
+            });
+          },
+          onHistoryTap: () {
+            setState(() {
+              _selectedIndex = 1; // Navigate to History
+            });
+          },
+          onFamilyTap: () {
+            setState(() {
+              _selectedIndex = 3; // Navigate to Profile
+            });
+          },
+        );
+      case 1:
+        return const HistoryPage();
+      case 2:
+        return const MedsPage();
+      case 3:
+        return const ProfilePage();
+      default:
+        return const HomePage();
+    }
   }
 
   @override
@@ -61,7 +62,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: _getPage(_selectedIndex),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceWhite,

@@ -1,7 +1,7 @@
+import 'package:aplikasi/screens/auth/login_page.dart';
+import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aplikasi/utils/app_colors.dart';
-import 'package:aplikasi/screens/auth/login_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -129,13 +129,6 @@ class ProfilePage extends StatelessWidget {
               'Informasi pribadi dan rekam medis',
               Icons.person_outline_rounded,
               AppColors.medicalBlue,
-            ),
-            const SizedBox(height: 12.0),
-            _buildSettingCard(
-              'Hubungkan Keluarga',
-              'Pantau jadwal bersama anggota keluarga',
-              Icons.family_restroom_rounded,
-              const Color(0xFF934700),
             ),
             const SizedBox(height: 12.0),
             _buildSettingCard(

@@ -1,3 +1,5 @@
+import 'package:aplikasi/models/medicine_model.dart';
+import 'package:aplikasi/repositories/medicine_repository.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,36 +15,15 @@ class _TambahObatPageState extends State<TambahObatPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _dosageValueController = TextEditingController();
-  final _stockController = TextEditingController();
 
   // Selections
   String _selectedDosageUnit = 'mg';
   String _selectedForm = 'Tablet';
   String _selectedFrequency = '1x Sehari';
   String _selectedFoodRelation = 'Sesudah Makan';
-  int _stockWarningThreshold = 5;
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
 
-  IconData _selectedIcon = Icons.medication_rounded;
-  Color _selectedColor = AppColors.medicalBlue;
-
-  // Custom Icon Options
-  final List<IconData> _iconOptions = [
-    Icons.medication_rounded,
-    Icons.healing_rounded,
-    Icons.vaccines_rounded,
-    Icons.bubble_chart_rounded,
-    Icons.water_drop_rounded,
-  ];
-
-  // Custom Color Options
-  final List<Color> _colorOptions = [
-    AppColors.medicalBlue,
-    AppColors.wellnessGreen,
-    const Color(0xFF934700), // Amber/Brown
-    const Color(0xFF6B38FB), // Purple
-    const Color(0xFF007C85), // Teal
-    const Color(0xFFD61F1F), // Crimson
-  ];
+  final Color _selectedColor = AppColors.medicalBlue;
 
   final List<String> _dosageUnits = ['mg', 'mcg', 'ml', 'IU', 'gr', 'Pil'];
   final List<String> _forms = ['Tablet', 'Kapsul', 'Sirup', 'Injeksi', 'Tetes'];
@@ -64,16 +45,35 @@ class _TambahObatPageState extends State<TambahObatPage> {
   void dispose() {
     _nameController.dispose();
     _dosageValueController.dispose();
-    _stockController.dispose();
     super.dispose();
   }
 
-  void _saveMedication() {
+  void _saveMedication() async {
     if (_formKey.currentState!.validate()) {
+      final String formattedTime = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+      
+      // Combine dose, unit, form, relation and frequency to display comprehensive info in UI
+      final String doseDescription = '${_dosageValueController.text} $_selectedDosageUnit • $_selectedForm • $_selectedFoodRelation • $_selectedFrequency';
+
+      final medicine = MedicineModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        medicineName: _nameController.text.trim(),
+        dose: doseDescription,
+        scheduleTime: formattedTime,
+        status: 'pending',
+      );
+
+      final repository = MedicineRepository();
+      await repository.addMedicine(medicine);
+
+      if (!mounted) return;
+
       // Show dynamic beautiful success modal sheet
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
+        isDismissible: false,
+        enableDrag: false,
         builder: (BuildContext context) {
           return Container(
             decoration: const BoxDecoration(
@@ -130,7 +130,7 @@ class _TambahObatPageState extends State<TambahObatPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context); // Close bottom sheet
-                      Navigator.pop(context); // Go back to meds list
+                      Navigator.pop(context, true); // Go back to meds list with reload flag = true
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _selectedColor,
@@ -427,6 +427,63 @@ class _TambahObatPageState extends State<TambahObatPage> {
                             backgroundColor: Colors.transparent,
                           );
                         }).toList(),
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // Waktu Konsumsi
+                      _buildLabel('Waktu Konsumsi'),
+                      InkWell(
+                        onTap: () async {
+                          final TimeOfDay? picked = await showTimePicker(
+                            context: context,
+                            initialTime: _selectedTime,
+                          );
+                          if (picked != null && picked != _selectedTime) {
+                            setState(() {
+                              _selectedTime = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 14.0,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.outlineVariant),
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.access_time_rounded,
+                                    color: AppColors.textGrey,
+                                  ),
+                                  const SizedBox(width: 12.0),
+                                  Text(
+                                    _selectedTime.format(context),
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.textDark,
+                                      fontSize: 14.0,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                'Ubah Waktu',
+                                style: GoogleFonts.inter(
+                                  color: AppColors.medicalBlue,
+                                  fontSize: 13.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),

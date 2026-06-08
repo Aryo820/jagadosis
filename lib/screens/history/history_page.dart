@@ -1,12 +1,103 @@
+import 'package:aplikasi/models/history_model.dart';
+import 'package:aplikasi/repositories/history_repository.dart';
+import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aplikasi/utils/app_colors.dart';
 
-class HistoryPage extends StatelessWidget {
+class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
   @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  final HistoryRepository _historyRepo = HistoryRepository();
+
+  DateTime _selectedDate = DateTime.now();
+  List<HistoryModel> _histories = [];
+  bool _isLoading = true;
+  int _weeklyAdherence = 100;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  /// Loads the history logs for the selected date and calculates general compliance rate.
+  Future<void> _loadHistory() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final dayLogs = await _historyRepo.getHistoriesByDate(_selectedDate);
+      final allLogs = await _historyRepo.getAllHistories();
+
+      // Simple weekly compliance calculation: count of taken logs out of total logs
+      final takenCount = allLogs.where((log) => log.status == 'taken').length;
+      final totalCount = allLogs.length;
+
+      setState(() {
+        _histories = dayLogs;
+        _weeklyAdherence = totalCount == 0 ? 100 : ((takenCount / totalCount) * 100).round();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Helpers for dynamic dates
+  List<DateTime> _getWeekDays() {
+    final now = DateTime.now();
+    // Start from Monday of current week
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    return List.generate(7, (index) => monday.add(Duration(days: index)));
+  }
+
+  String _getDayName(int weekday) {
+    const names = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    return names[weekday % 7];
+  }
+
+  String _getMonthYearName(DateTime date) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  String _getFormattedDay(DateTime date) {
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return '${days[date.weekday % 7]}, ${date.day} ${months[date.month - 1]}';
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Categorize logs by time of day
+    final List<HistoryModel> morningLogs = [];
+    final List<HistoryModel> afternoonLogs = [];
+    final List<HistoryModel> nightLogs = [];
+
+    for (final log in _histories) {
+      final hour = log.takenAt.hour;
+      if (hour >= 5 && hour < 12) {
+        morningLogs.add(log);
+      } else if (hour >= 12 && hour < 18) {
+        afternoonLogs.add(log);
+      } else {
+        nightLogs.add(log);
+      }
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundBlue,
       body: SingleChildScrollView(
@@ -36,7 +127,7 @@ class HistoryPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Kepatuhan Mingguan',
+                        'Kepatuhan Total',
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 16.0,
@@ -45,7 +136,7 @@ class HistoryPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 2.0),
                       Text(
-                        'Kerja bagus minggu ini!',
+                        'Kerja bagus menjaga kesehatan!',
                         style: GoogleFonts.inter(
                           fontSize: 12.0,
                           color: AppColors.textGrey,
@@ -56,7 +147,7 @@ class HistoryPage extends StatelessWidget {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '92% ',
+                              text: '$_weeklyAdherence% ',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 24.0,
                                 fontWeight: FontWeight.bold,
@@ -86,7 +177,7 @@ class HistoryPage extends StatelessWidget {
                             width: 50.0,
                             height: 50.0,
                             child: CircularProgressIndicator(
-                              value: 0.92,
+                              value: _weeklyAdherence / 100.0,
                               backgroundColor: AppColors.outlineVariant.withAlpha(60),
                               color: AppColors.wellnessGreen,
                               strokeWidth: 5.0,
@@ -95,7 +186,7 @@ class HistoryPage extends StatelessWidget {
                         ),
                         Center(
                           child: Text(
-                            '92%',
+                            '$_weeklyAdherence%',
                             style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.bold,
                               fontSize: 12.0,
@@ -116,7 +207,7 @@ class HistoryPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Oktober 2023',
+                  _getMonthYearName(_selectedDate),
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     fontSize: 18.0,
@@ -124,7 +215,12 @@ class HistoryPage extends StatelessWidget {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    setState(() {
+                      _selectedDate = DateTime.now();
+                    });
+                    _loadHistory();
+                  },
                   icon: const Icon(Icons.calendar_today_rounded, size: 16.0),
                   label: Text(
                     'Hari Ini',
@@ -143,22 +239,33 @@ class HistoryPage extends StatelessWidget {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: [
-                  _buildCalendarDay('Sen', '16', isCompleted: true),
-                  _buildCalendarDay('Sel', '17', isCompleted: true),
-                  _buildCalendarDay('Rab', '18', isActive: true, isCompleted: true),
-                  _buildCalendarDay('Kam', '19', isMissed: true),
-                  _buildCalendarDay('Jum', '20', isFuture: true),
-                  _buildCalendarDay('Sab', '21', isFuture: true),
-                  _buildCalendarDay('Min', '22', isFuture: true),
-                ],
+                children: _getWeekDays().map((date) {
+                  final isSameDay = date.year == _selectedDate.year &&
+                      date.month == _selectedDate.month &&
+                      date.day == _selectedDate.day;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedDate = date;
+                      });
+                      _loadHistory();
+                    },
+                    child: _buildCalendarDay(
+                      _getDayName(date.weekday),
+                      date.day.toString(),
+                      isActive: isSameDay,
+                      isFuture: date.isAfter(DateTime.now()),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
             const SizedBox(height: 24.0),
 
             // Daily Log Section
             Text(
-              'Rabu, 18 Oktober',
+              _getFormattedDay(_selectedDate),
               style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
                 fontSize: 18.0,
@@ -167,56 +274,89 @@ class HistoryPage extends StatelessWidget {
             ),
             const SizedBox(height: 16.0),
 
-            // Morning Group
-            _buildTimeGroupHeader('Pagi', Icons.wb_sunny_rounded, const Color(0xFFE65100)),
-            const SizedBox(height: 8.0),
-            _buildLogCard(
-              'Amlodipine',
-              '1 Tablet • 5mg',
-              'Diminum',
-              '08:05 Pagi',
-              AppColors.wellnessGreen,
-              Icons.check_circle_rounded,
-            ),
-            const SizedBox(height: 8.0),
-            _buildLogCard(
-              'Metformin',
-              '1 Tablet • 500mg',
-              'Diminum',
-              '08:10 Pagi',
-              AppColors.wellnessGreen,
-              Icons.check_circle_rounded,
-            ),
-            const SizedBox(height: 16.0),
-
-            // Afternoon Group
-            _buildTimeGroupHeader('Siang', Icons.wb_cloudy_rounded, AppColors.medicalBlue),
-            const SizedBox(height: 8.0),
-            _buildLogCard(
-              'Vitamin D3',
-              '1 Kapsul • 1000 IU',
-              'Terlewat',
-              '01:00 Siang',
-              const Color(0xFFEB5757),
-              Icons.cancel_rounded,
-            ),
-            const SizedBox(height: 16.0),
-
-            // Night Group
-            _buildTimeGroupHeader('Malam', Icons.bedtime_rounded, AppColors.textGrey),
-            const SizedBox(height: 8.0),
-            _buildLogCard(
-              'Simvastatin',
-              '1 Tablet • 20mg',
-              'Mendatang',
-              '08:00 Malam',
-              AppColors.textGrey,
-              Icons.schedule_rounded,
-              isFuture: true,
-            ),
-            const SizedBox(height: 24.0),
+            if (_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: CircularProgressIndicator(
+                    color: AppColors.medicalBlue,
+                  ),
+                ),
+              )
+            else if (_histories.isEmpty)
+              _buildEmptyState()
+            else ...[
+              if (morningLogs.isNotEmpty) ...[
+                _buildTimeGroupHeader('Pagi', Icons.wb_sunny_rounded, const Color(0xFFE65100)),
+                const SizedBox(height: 8.0),
+                ...morningLogs.map((log) => _buildHistoryCard(log)),
+                const SizedBox(height: 16.0),
+              ],
+              if (afternoonLogs.isNotEmpty) ...[
+                _buildTimeGroupHeader('Siang', Icons.wb_cloudy_rounded, AppColors.medicalBlue),
+                const SizedBox(height: 8.0),
+                ...afternoonLogs.map((log) => _buildHistoryCard(log)),
+                const SizedBox(height: 16.0),
+              ],
+              if (nightLogs.isNotEmpty) ...[
+                _buildTimeGroupHeader('Malam', Icons.bedtime_rounded, AppColors.textGrey),
+                const SizedBox(height: 8.0),
+                ...nightLogs.map((log) => _buildHistoryCard(log)),
+                const SizedBox(height: 24.0),
+              ],
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40.0),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.history_toggle_off_rounded,
+              size: 48.0,
+              color: AppColors.textGrey,
+            ),
+            const SizedBox(height: 12.0),
+            Text(
+              'Tidak Ada Riwayat',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 4.0),
+            Text(
+              'Belum ada catatan konsumsi obat untuk hari ini.',
+              style: GoogleFonts.inter(
+                fontSize: 12.0,
+                color: AppColors.textGrey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryCard(HistoryModel log) {
+    final timeString = '${log.takenAt.hour.toString().padLeft(2, '0')}:${log.takenAt.minute.toString().padLeft(2, '0')}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: _buildLogCard(
+        log.medicineName,
+        'Obat diminum tepat waktu',
+        log.status.toUpperCase(),
+        timeString,
+        AppColors.wellnessGreen,
+        Icons.check_circle_rounded,
       ),
     );
   }

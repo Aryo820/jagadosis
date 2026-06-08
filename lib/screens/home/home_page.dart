@@ -1,3 +1,7 @@
+import 'package:aplikasi/models/history_model.dart';
+import 'package:aplikasi/models/medicine_model.dart';
+import 'package:aplikasi/repositories/history_repository.dart';
+import 'package:aplikasi/repositories/medicine_repository.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,315 +23,473 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _obatTaken = false;
+  final MedicineRepository _medicineRepo = MedicineRepository();
+  final HistoryRepository _historyRepo = HistoryRepository();
+
+  List<MedicineModel> _medicines = [];
+  bool _isLoading = true;
+  MedicineModel? _nextPendingMedicine;
+  int _adherencePercent = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  /// Refreshes lists, calculates adherence progress, and determines the next pending medicine.
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final list = await _medicineRepo.getAllMedicines();
+      
+      // Sort medicines by schedule time (e.g. "08:00")
+      list.sort((a, b) => a.scheduleTime.compareTo(b.scheduleTime));
+
+      int takenCount = 0;
+      MedicineModel? nextPending;
+
+      for (final med in list) {
+        if (med.status == 'taken') {
+          takenCount++;
+        } else if (med.status == 'pending' && nextPending == null) {
+          nextPending = med;
+        }
+      }
+
+      setState(() {
+        _medicines = list;
+        _nextPendingMedicine = nextPending;
+        _adherencePercent = list.isEmpty ? 100 : ((takenCount / list.length) * 100).round();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Marks a medicine as taken, logs it in consumption history, and reloads state.
+  Future<void> _markAsTaken(MedicineModel medicine) async {
+    // 1. Update medicine status to 'taken' in medicines table
+    final updatedMed = MedicineModel(
+      id: medicine.id,
+      medicineName: medicine.medicineName,
+      dose: medicine.dose,
+      scheduleTime: medicine.scheduleTime,
+      status: 'taken',
+    );
+    await _medicineRepo.updateMedicine(updatedMed);
+
+    // 2. Add record to history table
+    final now = DateTime.now();
+    final history = HistoryModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      medicineName: medicine.medicineName,
+      takenAt: now,
+      status: 'taken',
+    );
+    await _historyRepo.addHistory(history);
+
+    // 3. Reload state
+    await _loadData();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${medicine.medicineName} berhasil diminum!'),
+        backgroundColor: AppColors.wellnessGreen,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Formats the current date in Indonesian layout.
+  String _getFormattedDate() {
+    final now = DateTime.now();
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return '${days[now.weekday % 7]}, ${now.day} ${months[now.month - 1]} ${now.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundBlue,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Greeting Section
-            const SizedBox(height: 8.0),
-            Text(
-              'Selamat Pagi, Budi',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              ),
-            ),
-            const SizedBox(height: 2.0),
-            Text(
-              'Senin, 24 Oktober 2023',
-              style: GoogleFonts.inter(
-                fontSize: 14.0,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textGrey,
-              ),
-            ),
-            const SizedBox(height: 20.0),
-
-            // Adherence Progress Section
-            Container(
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceWhite,
-                borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(
-                  color: AppColors.outlineVariant.withAlpha(50),
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: AppColors.medicalBlue,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Greeting Section
+              const SizedBox(height: 8.0),
+              Text(
+                'Selamat Pagi, Budi',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(10),
-                    blurRadius: 16.0,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Kepatuhan Hari Ini',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16.0,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(height: 2.0),
-                        Text(
-                          _obatTaken
-                              ? 'Luar biasa, semua obat diminum!'
-                              : 'Bagus, terus pertahankan!',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.0,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                      ],
-                    ),
+              const SizedBox(height: 2.0),
+              Text(
+                _getFormattedDate(),
+                style: GoogleFonts.inter(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textGrey,
+                ),
+              ),
+              const SizedBox(height: 20.0),
+
+              // Adherence Progress Section
+              Container(
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(16.0),
+                  border: Border.all(
+                    color: AppColors.outlineVariant.withAlpha(50),
                   ),
-                  const SizedBox(width: 12.0),
-                  // Progress Circle
-                  SizedBox(
-                    width: 64.0,
-                    height: 64.0,
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: SizedBox(
-                            width: 56.0,
-                            height: 56.0,
-                            child: CircularProgressIndicator(
-                              value: _obatTaken ? 1.0 : 0.80,
-                              backgroundColor: AppColors.outlineVariant
-                                  .withAlpha(60),
-                              color: AppColors.wellnessGreen,
-                              strokeWidth: 5.5,
-                            ),
-                          ),
-                        ),
-                        Center(
-                          child: Text(
-                            _obatTaken ? '100%' : '80%',
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(10),
+                      blurRadius: 16.0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Kepatuhan Hari Ini',
                             style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.bold,
-                              fontSize: 13.0,
-                              color: AppColors.wellnessGreen,
+                              fontSize: 16.0,
+                              color: AppColors.textDark,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2.0),
+                          Text(
+                            _adherencePercent == 100
+                                ? 'Luar biasa, semua obat diminum!'
+                                : 'Bagus, mari minum obat tepat waktu!',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.0,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12.0),
+                    // Progress Circle
+                    SizedBox(
+                      width: 64.0,
+                      height: 64.0,
+                      child: Stack(
+                        children: [
+                          Center(
+                            child: SizedBox(
+                              width: 56.0,
+                              height: 56.0,
+                              child: CircularProgressIndicator(
+                                value: _adherencePercent / 100.0,
+                                backgroundColor: AppColors.outlineVariant.withAlpha(60),
+                                color: AppColors.wellnessGreen,
+                                strokeWidth: 5.5,
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: Text(
+                              '$_adherencePercent%',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.0,
+                                color: AppColors.wellnessGreen,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24.0),
+
+              // Today's Schedule Card (Next Reminder)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Jadwal Terdekat',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18.0,
+                      color: AppColors.textDark,
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24.0),
+              const SizedBox(height: 12.0),
 
-            // Today's Schedule Card (Next Reminder)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              if (_isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40.0),
+                    child: CircularProgressIndicator(
+                      color: AppColors.medicalBlue,
+                    ),
+                  ),
+                )
+              else if (_medicines.isEmpty)
+                _buildNoMedicinesCard()
+              else if (_nextPendingMedicine == null)
+                _buildAllTakenCard()
+              else
+                _buildPendingMedCard(_nextPendingMedicine!),
+
+              const SizedBox(height: 24.0),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Card displayed when no medicines are added yet.
+  Widget _buildNoMedicinesCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: AppColors.outlineVariant.withAlpha(100)),
+      ),
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.medical_services_outlined,
+            size: 40.0,
+            color: AppColors.textGrey,
+          ),
+          const SizedBox(height: 12.0),
+          Text(
+            'Belum Ada Jadwal Obat',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.0,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 6.0),
+          Text(
+            'Silakan tambahkan jadwal obat Anda terlebih dahulu di menu Meds.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 12.0,
+              color: AppColors.textGrey,
+            ),
+          ),
+          const SizedBox(height: 16.0),
+          ElevatedButton(
+            onPressed: widget.onAddMedTap,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.medicalBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            child: const Text('Tambah Obat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Card displayed when all scheduled medicines are marked as taken.
+  Widget _buildAllTakenCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: AppColors.outlineVariant.withAlpha(100)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(5),
+            blurRadius: 10.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            size: 44.0,
+            color: AppColors.wellnessGreen,
+          ),
+          const SizedBox(height: 12.0),
+          Text(
+            'Semua Obat Hari Ini Selesai!',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.0,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 6.0),
+          Text(
+            'Luar biasa! Anda telah meminum semua obat terjadwal Anda untuk hari ini.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 12.0,
+              color: AppColors.textGrey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Card displaying details of the next scheduled pending medicine.
+  Widget _buildPendingMedCard(MedicineModel medicine) {
+    // Parse dose components: "value unit • form • relation • frequency"
+    final parts = medicine.dose.split(' • ');
+    final dosage = parts.isNotEmpty ? parts[0] : medicine.dose;
+    final form = parts.length > 1 ? parts[1] : '';
+    final relation = parts.length > 2 ? parts[2] : '';
+
+    IconData icon = Icons.medication_rounded;
+    if (form.toLowerCase().contains('kapsul')) {
+      icon = Icons.healing_rounded;
+    } else if (form.toLowerCase().contains('sirup')) {
+      icon = Icons.vaccines_rounded;
+    }
+
+    final doseInfo = '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}${relation.isNotEmpty ? ' • $relation' : ''}';
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.medicalBlue,
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.medicalBlue.withAlpha(60),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48.0,
+            height: 48.0,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceWhite.withAlpha(50),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.surfaceWhite,
+              size: 28.0,
+            ),
+          ),
+          const SizedBox(width: 16.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Jadwal Terdekat',
+                  medicine.medicineName,
                   style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold,
                     fontSize: 18.0,
-                    color: AppColors.textDark,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.surfaceWhite,
                   ),
                 ),
-                if (!_obatTaken)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10.0,
-                      vertical: 4.0,
+                const SizedBox(height: 4.0),
+                Text(
+                  'Dosis: $doseInfo',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    color: AppColors.surfaceWhite.withAlpha(200),
+                  ),
+                ),
+                const SizedBox(height: 12.0),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.schedule_rounded,
+                      size: 16.0,
+                      color: AppColors.surfaceWhite,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryContainer.withAlpha(40),
-                      borderRadius: BorderRadius.circular(20.0),
+                    const SizedBox(width: 6.0),
+                    Text(
+                      medicine.scheduleTime,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.surfaceWhite,
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.timer_outlined,
-                          size: 14.0,
-                          color: AppColors.medicalBlue,
-                        ),
-                        const SizedBox(width: 4.0),
-                        Text(
-                          'Dalam 45 mnt',
-                          style: GoogleFonts.inter(
-                            fontSize: 11.0,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.medicalBlue,
-                          ),
-                        ),
-                      ],
+                  ],
+                ),
+                const SizedBox(height: 20.0),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48.0,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _markAsTaken(medicine),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.surfaceWhite,
+                      foregroundColor: AppColors.medicalBlue,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.check_circle_outline_rounded,
+                    ),
+                    label: Text(
+                      'Tandai Sudah Diminum',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.0,
+                      ),
                     ),
                   ),
+                ),
               ],
             ),
-            const SizedBox(height: 12.0),
-
-            // Medication card
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: _obatTaken
-                    ? AppColors.surfaceWhite
-                    : AppColors.medicalBlue,
-                borderRadius: BorderRadius.circular(16.0),
-                border: _obatTaken
-                    ? Border.all(color: AppColors.outlineVariant.withAlpha(100))
-                    : null,
-                boxShadow: [
-                  BoxShadow(
-                    color: _obatTaken
-                        ? Colors.black.withAlpha(5)
-                        : AppColors.medicalBlue.withAlpha(60),
-                    blurRadius: 16.0,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(20.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 48.0,
-                    height: 48.0,
-                    decoration: BoxDecoration(
-                      color: _obatTaken
-                          ? AppColors.wellnessGreen.withAlpha(25)
-                          : AppColors.surfaceWhite.withAlpha(50),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _obatTaken
-                          ? Icons.check_circle_rounded
-                          : Icons.medication_rounded,
-                      color: _obatTaken
-                          ? AppColors.wellnessGreen
-                          : AppColors.surfaceWhite,
-                      size: 28.0,
-                    ),
-                  ),
-                  const SizedBox(width: 16.0),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Amlodipine',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold,
-                            color: _obatTaken
-                                ? AppColors.textDark
-                                : AppColors.surfaceWhite,
-                          ),
-                        ),
-                        const SizedBox(height: 4.0),
-                        Text(
-                          'Dosis: 10 mg • 1 Tablet Sesudah Makan',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            color: _obatTaken
-                                ? AppColors.textGrey
-                                : AppColors.surfaceWhite.withAlpha(200),
-                          ),
-                        ),
-                        const SizedBox(height: 12.0),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 16.0,
-                              color: _obatTaken
-                                  ? AppColors.textGrey
-                                  : AppColors.surfaceWhite.withAlpha(200),
-                            ),
-                            const SizedBox(width: 6.0),
-                            Text(
-                              '08:00 Pagi',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.bold,
-                                color: _obatTaken
-                                    ? AppColors.textDark
-                                    : AppColors.surfaceWhite,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20.0),
-                        if (!_obatTaken)
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48.0,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _obatTaken = true;
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Obat ditandai sudah diminum!',
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.surfaceWhite,
-                                foregroundColor: AppColors.medicalBlue,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.check_circle_outline_rounded,
-                              ),
-                              label: Text(
-                                'Tandai Sudah Diminum',
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14.0,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          Text(
-                            'Sudah diminum pukul 08:05 Pagi',
-                            style: GoogleFonts.inter(
-                              color: AppColors.wellnessGreen,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.0,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24.0),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

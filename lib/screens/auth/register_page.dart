@@ -1,6 +1,8 @@
+import 'package:aplikasi/database/db_helper.dart';
+import 'package:aplikasi/models/user_model.dart';
+import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aplikasi/utils/app_colors.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -16,7 +18,49 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
-  final bool _agreeToTerms = false;
+  bool _agreeToTerms = false;
+
+  void register() async {
+    if (_formKey.currentState!.validate()) {
+      if (!_agreeToTerms) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Anda harus menyetujui Syarat & Ketentuan'),
+          ),
+        );
+        return;
+      }
+
+      // Create user model
+      final user = UserModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      final dbService = DatabaseService();
+      final success = await dbService.registerUser(user);
+
+      if (!mounted) return;
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pendaftaran berhasil! Silakan masuk.'),
+            backgroundColor: AppColors.wellnessGreen,
+          ),
+        );
+        Navigator.pop(context); // Go back to login page
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pendaftaran gagal. Email mungkin sudah terdaftar.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -324,6 +368,29 @@ class _RegisterPageState extends State<RegisterPage> {
                                 return null;
                               },
                             ),
+                            // Agree to Terms Checkbox
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _agreeToTerms,
+                                  activeColor: AppColors.medicalBlue,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _agreeToTerms = value ?? false;
+                                    });
+                                  },
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'Saya menyetujui Syarat & Ketentuan',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13.0,
+                                      color: AppColors.textGrey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 16.0),
 
                             // Register Button
@@ -331,30 +398,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               width: double.infinity,
                               height: 52.0,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    if (!_agreeToTerms) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Anda harus menyetujui Syarat & Ketentuan',
-                                          ),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    // Action for register success
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Pendaftaran berhasil! Selamat datang di JagaDosis.',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
+                                onPressed: register,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.medicalBlue,
                                   foregroundColor: AppColors.surfaceWhite,
