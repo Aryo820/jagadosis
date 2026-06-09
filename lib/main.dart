@@ -1,8 +1,15 @@
+import 'package:aplikasi/database/preference_handler.dart';
+import 'package:aplikasi/screens/auth/login_page.dart';
+import 'package:aplikasi/screens/dashboard_page.dart';
 import 'package:aplikasi/screens/splash/splash_screen.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
+  await PreferenceHandler.init();
   runApp(const MyApp());
 }
 
@@ -21,7 +28,13 @@ class MyApp extends StatelessWidget {
           primary: AppColors.medicalBlue,
         ),
       ),
-      home: const SplashScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => SplashScreen(),
+        '/login': (context) => LoginPage(),
+        '/dashboard': (context) => DashboardPage(),
+      },
+      // home: const SplashScreen(),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/models/history_model.dart';
 import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/history_repository.dart';
@@ -44,7 +45,7 @@ class _HomePageState extends State<HomePage> {
     });
     try {
       final list = await _medicineRepo.getAllMedicines();
-      
+
       // Sort medicines by schedule time (e.g. "08:00")
       list.sort((a, b) => a.scheduleTime.compareTo(b.scheduleTime));
 
@@ -62,7 +63,9 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _medicines = list;
         _nextPendingMedicine = nextPending;
-        _adherencePercent = list.isEmpty ? 100 : ((takenCount / list.length) * 100).round();
+        _adherencePercent = list.isEmpty
+            ? 100
+            : ((takenCount / list.length) * 100).round();
         _isLoading = false;
       });
     } catch (e) {
@@ -110,12 +113,41 @@ class _HomePageState extends State<HomePage> {
   /// Formats the current date in Indonesian layout.
   String _getFormattedDate() {
     final now = DateTime.now();
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const days = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ];
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return '${days[now.weekday % 7]}, ${now.day} ${months[now.month - 1]} ${now.year}';
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Pagi';
+    } else if (hour < 18) {
+      return 'Siang';
+    } else {
+      return 'Malam';
+    }
   }
 
   @override
@@ -134,7 +166,7 @@ class _HomePageState extends State<HomePage> {
               // Greeting Section
               const SizedBox(height: 8.0),
               Text(
-                'Selamat Pagi, Budi',
+                'Selamat ${_getGreeting()}, ${PreferenceHandler.userName}',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 24.0,
                   fontWeight: FontWeight.bold,
@@ -210,7 +242,8 @@ class _HomePageState extends State<HomePage> {
                               height: 56.0,
                               child: CircularProgressIndicator(
                                 value: _adherencePercent / 100.0,
-                                backgroundColor: AppColors.outlineVariant.withAlpha(60),
+                                backgroundColor: AppColors.outlineVariant
+                                    .withAlpha(60),
                                 color: AppColors.wellnessGreen,
                                 strokeWidth: 5.5,
                               ),
@@ -304,10 +337,7 @@ class _HomePageState extends State<HomePage> {
           Text(
             'Silakan tambahkan jadwal obat Anda terlebih dahulu di menu Meds.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12.0,
-              color: AppColors.textGrey,
-            ),
+            style: GoogleFonts.inter(fontSize: 12.0, color: AppColors.textGrey),
           ),
           const SizedBox(height: 16.0),
           ElevatedButton(
@@ -363,10 +393,7 @@ class _HomePageState extends State<HomePage> {
           Text(
             'Luar biasa! Anda telah meminum semua obat terjadwal Anda untuk hari ini.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12.0,
-              color: AppColors.textGrey,
-            ),
+            style: GoogleFonts.inter(fontSize: 12.0, color: AppColors.textGrey),
           ),
         ],
       ),
@@ -388,7 +415,8 @@ class _HomePageState extends State<HomePage> {
       icon = Icons.vaccines_rounded;
     }
 
-    final doseInfo = '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}${relation.isNotEmpty ? ' • $relation' : ''}';
+    final doseInfo =
+        '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}${relation.isNotEmpty ? ' • $relation' : ''}';
 
     return Container(
       width: double.infinity,
@@ -414,11 +442,7 @@ class _HomePageState extends State<HomePage> {
               color: AppColors.surfaceWhite.withAlpha(50),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: AppColors.surfaceWhite,
-              size: 28.0,
-            ),
+            child: Icon(icon, color: AppColors.surfaceWhite, size: 28.0),
           ),
           const SizedBox(width: 16.0),
           Expanded(
@@ -474,9 +498,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    icon: const Icon(
-                      Icons.check_circle_outline_rounded,
-                    ),
+                    icon: const Icon(Icons.check_circle_outline_rounded),
                     label: Text(
                       'Tandai Sudah Diminum',
                       style: GoogleFonts.inter(

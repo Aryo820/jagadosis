@@ -1,4 +1,6 @@
 import 'package:aplikasi/database/db_helper.dart';
+import 'package:aplikasi/database/preference_handler.dart';
+import 'package:aplikasi/extensions/navigator.dart';
 import 'package:aplikasi/screens/auth/forgot_password_page.dart';
 import 'package:aplikasi/screens/auth/register_page.dart';
 import 'package:aplikasi/screens/dashboard_page.dart';
@@ -18,6 +20,18 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    if (PreferenceHandler.isLogin) {
+      if (!mounted) return;
+      context.pushAndRemoveAll(const DashboardPage());
+    }
+  }
 
   void login() async {
     if (_formKey.currentState!.validate()) {
@@ -29,6 +43,8 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
       if (user != null) {
+        await PreferenceHandler.saveUser(user.name, user.email);
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const DashboardPage()),

@@ -1,5 +1,8 @@
 import 'dart:async';
+
+import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/screens/auth/login_page.dart';
+import 'package:aplikasi/screens/dashboard_page.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _textFadeAnimation;
   late Animation<Offset> _textSlideAnimation;
   late Animation<double> _taglineFadeAnimation;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -54,15 +58,13 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     // App title slide up slightly
-    _textSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.4, 0.8, curve: Curves.easeOutBack),
-      ),
-    );
+    _textSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.4, 0.8, curve: Curves.easeOutBack),
+          ),
+        );
 
     // Tagline fade
     _taglineFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -76,20 +78,20 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     // Navigate to Login Screen after 3 seconds
-    Timer(const Duration(seconds: 3), _navigateToHome);
+    _timer = Timer(const Duration(seconds: 3), _navigateToHome);
   }
 
   void _navigateToHome() {
     if (!mounted) return;
+    final Widget destination = PreferenceHandler.isLogin
+        ? const DashboardPage()
+        : const LoginPage();
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const LoginPage(),
+        pageBuilder: (context, animation, secondaryAnimation) => destination,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
         transitionDuration: const Duration(milliseconds: 800),
       ),
@@ -98,6 +100,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
+    _timer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -214,7 +217,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ],
                     ),
                   ),
-                  
+
                   // Animated Tagline
                   AnimatedBuilder(
                     animation: _controller,
@@ -225,7 +228,7 @@ class _SplashScreenState extends State<SplashScreen>
                       );
                     },
                     child: Text(
-                      'Pendamping Pintar Dosis & Jadwal Obat Anda',
+                      'Pendamping Pintar Jadwal Obat Anda',
                       style: GoogleFonts.inter(
                         fontSize: 14.0,
                         fontWeight: FontWeight.w400,

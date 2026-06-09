@@ -4,21 +4,16 @@ import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class AddMedicinePage extends StatefulWidget {
-  final VoidCallback? onMedicineAdded;
-  final MedicineModel? existingMedicine;
+class UpdateMedicinePage extends StatefulWidget {
+  final MedicineModel medicine;
 
-  const AddMedicinePage({
-    super.key,
-    this.onMedicineAdded,
-    this.existingMedicine,
-  });
+  const UpdateMedicinePage({super.key, required this.medicine});
 
   @override
-  State<AddMedicinePage> createState() => _AddMedicinePageState();
+  State<UpdateMedicinePage> createState() => _UpdateMedicinePageState();
 }
 
-class _AddMedicinePageState extends State<AddMedicinePage> {
+class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _dosageValueController = TextEditingController();
@@ -49,6 +44,63 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    final med = widget.medicine;
+    _nameController.text = med.medicineName;
+
+    // Parse dose string: "500 mg • Tablet • Sesudah Makan • 1x Sehari"
+    final parts = med.dose.split(' • ');
+    if (parts.length >= 4) {
+      final dosageAndUnit = parts[0].trim();
+      final form = parts[1].trim();
+      final relation = parts[2].trim();
+      final frequency = parts[3].trim();
+
+      // Parse dosage and unit: "500 mg"
+      final dosageParts = dosageAndUnit.split(' ');
+      if (dosageParts.isNotEmpty) {
+        _dosageValueController.text = dosageParts[0];
+        if (dosageParts.length > 1) {
+          final unit = dosageParts.sublist(1).join(' ');
+          if (!_dosageUnits.contains(unit)) {
+            _dosageUnits.add(unit);
+          }
+          _selectedDosageUnit = unit;
+        }
+      }
+
+      if (!_forms.contains(form)) {
+        _forms.add(form);
+      }
+      _selectedForm = form;
+
+      if (!_foodRelations.contains(relation)) {
+        _foodRelations.add(relation);
+      }
+      _selectedFoodRelation = relation;
+
+      if (!_frequencies.contains(frequency)) {
+        _frequencies.add(frequency);
+      }
+      _selectedFrequency = frequency;
+    } else {
+      // Fallback if dose format is simple or doesn't match
+      _dosageValueController.text = med.dose;
+    }
+
+    // Parse scheduleTime: "08:00"
+    final timeParts = med.scheduleTime.split(':');
+    if (timeParts.length == 2) {
+      final hour = int.tryParse(timeParts[0]);
+      final minute = int.tryParse(timeParts[1]);
+      if (hour != null && minute != null) {
+        _selectedTime = TimeOfDay(hour: hour, minute: minute);
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _dosageValueController.dispose();
@@ -64,16 +116,16 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       final String doseDescription =
           '${_dosageValueController.text} $_selectedDosageUnit • $_selectedForm • $_selectedFoodRelation • $_selectedFrequency';
 
-      final medicine = MedicineModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+      final updatedMedicine = MedicineModel(
+        id: widget.medicine.id,
         medicineName: _nameController.text.trim(),
         dose: doseDescription,
         scheduleTime: formattedTime,
-        status: 'pending',
+        status: widget.medicine.status,
       );
 
       final repository = MedicineRepository();
-      await repository.addMedicine(medicine);
+      await repository.updateMedicine(updatedMedicine);
 
       if (!mounted) return;
 
@@ -116,7 +168,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                 ),
                 const SizedBox(height: 16.0),
                 Text(
-                  'Obat Berhasil Disimpan',
+                  'Obat Berhasil Diperbarui',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 20.0,
                     fontWeight: FontWeight.bold,
@@ -125,7 +177,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                 ),
                 const SizedBox(height: 8.0),
                 Text(
-                  '${_nameController.text} (${_dosageValueController.text} $_selectedDosageUnit) telah ditambahkan ke daftar obat Anda.',
+                  '${_nameController.text} (${_dosageValueController.text} $_selectedDosageUnit) telah diperbarui.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 14.0,
@@ -184,7 +236,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Tambah Obat Baru',
+          'Ubah Detail Obat',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 20.0,
             fontWeight: FontWeight.bold,
@@ -249,12 +301,6 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                                     hint: 'Contoh: 500',
                                     icon: Icons.scale_rounded,
                                   ),
-                                  // validator: (value) {
-                                  //   if (value == null || value.trim().isEmpty) {
-                                  //     return 'Dosis kosong';
-                                  //   }
-                                  //   return null;
-                                  // },
                                 ),
                               ],
                             ),
@@ -523,7 +569,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                         const Icon(Icons.save_rounded, size: 20.0),
                         const SizedBox(width: 8.0),
                         Text(
-                          'Simpan Obat',
+                          'Simpan Perubahan',
                           style: GoogleFonts.inter(
                             fontSize: 16.0,
                             fontWeight: FontWeight.bold,

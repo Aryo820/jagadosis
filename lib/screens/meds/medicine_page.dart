@@ -1,6 +1,7 @@
 import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/medicine_repository.dart';
 import 'package:aplikasi/screens/meds/add_medicine_page.dart';
+import 'package:aplikasi/screens/meds/update_medicine_page.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -124,8 +125,10 @@ class _MedsPageState extends State<MedsPage> {
                   color = Colors.teal;
                 }
 
-                final doseText = '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}';
-                final instructionText = '${frequency.isNotEmpty ? frequency : '1x Sehari'}${relation.isNotEmpty ? ' • $relation' : ''}';
+                final doseText =
+                    '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}';
+                final instructionText =
+                    '${frequency.isNotEmpty ? frequency : '1x Sehari'}${relation.isNotEmpty ? ' • $relation' : ''}';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
@@ -138,6 +141,7 @@ class _MedsPageState extends State<MedsPage> {
                     icon,
                     color,
                     medicineId: medicine.id,
+                    medicine: medicine,
                   ),
                 );
               }),
@@ -149,7 +153,7 @@ class _MedsPageState extends State<MedsPage> {
         onPressed: () async {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const TambahObatPage()),
+            MaterialPageRoute(builder: (context) => const AddMedicinePage()),
           );
           if (result == true) {
             _loadMedicines();
@@ -223,6 +227,7 @@ class _MedsPageState extends State<MedsPage> {
     IconData icon,
     Color color, {
     required String medicineId,
+    required MedicineModel medicine,
   }) {
     return Container(
       width: double.infinity,
@@ -354,7 +359,8 @@ class _MedsPageState extends State<MedsPage> {
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.pop(context),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
                                           child: const Text('Batal'),
                                         ),
                                         TextButton(
@@ -373,6 +379,32 @@ class _MedsPageState extends State<MedsPage> {
                                     );
                                   },
                                 );
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(
+                                Icons.edit_note_rounded,
+                                color: AppColors.medicalBlue,
+                              ),
+                              title: Text(
+                                'Ubah Obat',
+                                style: GoogleFonts.inter(
+                                  color: AppColors.medicalBlue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onTap: () async {
+                                Navigator.pop(context);
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        UpdateMedicinePage(medicine: medicine),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _loadMedicines();
+                                }
                               },
                             ),
                             const SizedBox(height: 8.0),

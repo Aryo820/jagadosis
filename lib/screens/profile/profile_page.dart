@@ -1,3 +1,4 @@
+import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/screens/auth/login_page.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -72,7 +73,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12.0),
                   Text(
-                    'Budi Santoso',
+                    PreferenceHandler.userName,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 20.0,
                       fontWeight: FontWeight.bold,
@@ -81,7 +82,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 2.0),
                   Text(
-                    'budi.santoso@email.com',
+                    PreferenceHandler.userEmail,
                     style: GoogleFonts.inter(
                       fontSize: 14.0,
                       color: AppColors.textGrey,
@@ -158,13 +159,19 @@ class ProfilePage extends StatelessWidget {
               width: double.infinity,
               height: 52.0,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
-                  );
+                onPressed: () async {
+                  await PreferenceHandler.logOut();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                      (route) => false,
+                    );
+                  }
                 },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEB5757),
                   foregroundColor: AppColors.surfaceWhite,
