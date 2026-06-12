@@ -1,0 +1,782 @@
+[
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 22.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                        fontSize: 22.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.textDark,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                        fontWeight: FontWeight.w500,\n                        color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                        fontSize: 14.0,\n                        fontWeight: FontWeight.w500,\n                        color: AppColors.textGrey,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),",
+    "fullMatch": "GoogleFonts.inter(\n                                  fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),\n                                )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0)"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontWeight:\n                                                          FontWeight.bold,\n                                                      color: Colors.white,",
+    "fullMatch": "GoogleFonts.inter(\n                                                      fontWeight:\n                                                          FontWeight.bold,\n                                                      color: Colors.white,\n                                                    )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                                                      color: Colors.white70,",
+    "fullMatch": "GoogleFonts.inter(\n                                                      fontSize: 12.0,\n                                                      color: Colors.white70,\n                                                    )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\n                                        fontWeight: FontWeight.w600,",
+    "fullMatch": "GoogleFonts.inter(\n                                        fontSize: 16.0,\n                                        fontWeight: FontWeight.w600,\n                                      )"
+  },
+  {
+    "file": "lib\\screens\\auth\\forgot_password_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\n                          fontWeight: FontWeight.w600,\n                          color: AppColors.medicalBlue,",
+    "fullMatch": "GoogleFonts.inter(\n                          fontSize: 16.0,\n                          fontWeight: FontWeight.w600,\n                          color: AppColors.medicalBlue,\n                        )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 24.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.medicalBlue,\n                        letterSpacing: -0.5,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                        fontSize: 24.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.medicalBlue,\n                        letterSpacing: -0.5,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 20.0,\n                                      fontWeight: FontWeight.w600,\n                                      color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                                      fontSize: 20.0,\n                                      fontWeight: FontWeight.w600,\n                                      color: AppColors.textDark,\n                                    )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                      fontWeight: FontWeight.w500,\n                                      color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                                      fontSize: 14.0,\n                                      fontWeight: FontWeight.w500,\n                                      color: AppColors.textGrey,\n                                    )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),",
+    "fullMatch": "GoogleFonts.inter(\n                                  fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),\n                                )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0)"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),",
+    "fullMatch": "GoogleFonts.inter(\n                                  fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),\n                                )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0)"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                                    fontWeight: FontWeight.w600,\n                                    color: AppColors.medicalBlue,",
+    "fullMatch": "GoogleFonts.inter(\n                                    fontSize: 12.0,\n                                    fontWeight: FontWeight.w600,\n                                    color: AppColors.medicalBlue,\n                                  )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\n                                    fontWeight: FontWeight.w600,",
+    "fullMatch": "GoogleFonts.inter(\n                                    fontSize: 16.0,\n                                    fontWeight: FontWeight.w600,\n                                  )"
+  },
+  {
+    "file": "lib\\screens\\auth\\login_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\n                                    fontWeight: FontWeight.w600,",
+    "fullMatch": "GoogleFonts.inter(\n                                    fontSize: 16.0,\n                                    fontWeight: FontWeight.w600,\n                                  )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 24.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.medicalBlue,\n                        letterSpacing: -0.5,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                        fontSize: 24.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.medicalBlue,\n                        letterSpacing: -0.5,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                        fontWeight: FontWeight.w500,\n                        color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                        fontSize: 14.0,\n                        fontWeight: FontWeight.w500,\n                        color: AppColors.textGrey,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 20.0,\n                                  fontWeight: FontWeight.w600,\n                                  color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                                  fontSize: 20.0,\n                                  fontWeight: FontWeight.w600,\n                                  color: AppColors.textDark,\n                                )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),",
+    "fullMatch": "GoogleFonts.inter(\n                                  fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),\n                                )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0)"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),",
+    "fullMatch": "GoogleFonts.inter(\n                                  fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),\n                                )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0)"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                fontWeight: FontWeight.w600,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 14.0,\n                                color: AppColors.textDark,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),",
+    "fullMatch": "GoogleFonts.inter(\n                                  fontSize: 14.0,\n                                  color: AppColors.textGrey.withAlpha(178),\n                                )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0)"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\n                                      color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                                      fontSize: 13.0,\n                                      color: AppColors.textGrey,\n                                    )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\n                                        fontWeight: FontWeight.w600,",
+    "fullMatch": "GoogleFonts.inter(\n                                        fontSize: 16.0,\n                                        fontWeight: FontWeight.w600,\n                                      )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                      color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                                      fontSize: 14.0,\n                                      color: AppColors.textGrey,\n                                    )"
+  },
+  {
+    "file": "lib\\screens\\auth\\register_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                                        fontWeight: FontWeight.bold,\n                                        color: AppColors.medicalBlue,",
+    "fullMatch": "GoogleFonts.inter(\n                                        fontSize: 14.0,\n                                        fontWeight: FontWeight.bold,\n                                        color: AppColors.medicalBlue,\n                                      )"
+  },
+  {
+    "file": "lib\\screens\\dashboard_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n            color: AppColors.medicalBlue,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n            fontWeight: FontWeight.bold,\n            color: AppColors.medicalBlue,\n          )"
+  },
+  {
+    "file": "lib\\screens\\dashboard_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,\n                color: isActive ? AppColors.medicalBlue : AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                fontSize: 12.0,\n                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,\n                color: isActive ? AppColors.medicalBlue : AppColors.textGrey,\n              )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                          fontSize: 16.0,\n                          color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                          fontWeight: FontWeight.bold,\n                          fontSize: 16.0,\n                          color: AppColors.textDark,\n                        )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                          color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                          fontSize: 12.0,\n                          color: AppColors.textGrey,\n                        )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 24.0,\n                                fontWeight: FontWeight.bold,\n                                color: AppColors.medicalBlue,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                                fontSize: 24.0,\n                                fontWeight: FontWeight.bold,\n                                color: AppColors.medicalBlue,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                                color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                                fontSize: 12.0,\n                                color: AppColors.textGrey,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                              fontSize: 12.0,\n                              color: AppColors.wellnessGreen,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                              fontWeight: FontWeight.bold,\n                              fontSize: 12.0,\n                              color: AppColors.wellnessGreen,\n                            )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                    fontSize: 18.0,\n                    color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                    fontWeight: FontWeight.bold,\n                    fontSize: 18.0,\n                    color: AppColors.textDark,\n                  )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontWeight: FontWeight.w600",
+    "fullMatch": "GoogleFonts.inter(fontWeight: FontWeight.w600)"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                fontSize: 18.0,\n                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                fontWeight: FontWeight.bold,\n                fontSize: 18.0,\n                color: AppColors.textDark,\n              )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\n                fontWeight: FontWeight.bold,\n                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                fontSize: 16.0,\n                fontWeight: FontWeight.bold,\n                color: AppColors.textDark,\n              )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                fontSize: 12.0,\n                color: AppColors.textGrey,\n              )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontSize: 11.0,\n              fontWeight: FontWeight.w500,\n              color: subColor,",
+    "fullMatch": "GoogleFonts.inter(\n              fontSize: 11.0,\n              fontWeight: FontWeight.w500,\n              color: subColor,\n            )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\n              fontWeight: FontWeight.bold,\n              color: textColor,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n              fontSize: 16.0,\n              fontWeight: FontWeight.bold,\n              color: textColor,\n            )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontSize: 10.0,\n              fontWeight: FontWeight.bold,\n              color: color,\n              letterSpacing: 1.0,",
+    "fullMatch": "GoogleFonts.inter(\n              fontSize: 10.0,\n              fontWeight: FontWeight.bold,\n              color: color,\n              letterSpacing: 1.0,\n            )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                    fontSize: 16.0,\n                    color: isFuture ? AppColors.textDark.withAlpha(150) : AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                    fontWeight: FontWeight.bold,\n                    fontSize: 16.0,\n                    color: isFuture ? AppColors.textDark.withAlpha(150) : AppColors.textDark,\n                  )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                    color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                    fontSize: 12.0,\n                    color: AppColors.textGrey,\n                  )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontWeight: FontWeight.bold,\n                  fontSize: 12.0,\n                  color: color,",
+    "fullMatch": "GoogleFonts.inter(\n                  fontWeight: FontWeight.bold,\n                  fontSize: 12.0,\n                  color: color,\n                )"
+  },
+  {
+    "file": "lib\\screens\\history\\history_page.dart",
+    "font": "inter",
+    "args": "fontSize: 11.0,\n                  color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                  fontSize: 11.0,\n                  color: AppColors.textGrey,\n                )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 24.0,\n                  fontWeight: FontWeight.bold,\n                  color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                  fontSize: 24.0,\n                  fontWeight: FontWeight.bold,\n                  color: AppColors.textDark,\n                )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                  fontWeight: FontWeight.w500,\n                  color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                  fontSize: 14.0,\n                  fontWeight: FontWeight.w500,\n                  color: AppColors.textGrey,\n                )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                              fontSize: 16.0,\n                              color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                              fontWeight: FontWeight.bold,\n                              fontSize: 16.0,\n                              color: AppColors.textDark,\n                            )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                              color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                              fontSize: 12.0,\n                              color: AppColors.textGrey,\n                            )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                                fontSize: 13.0,\n                                color: AppColors.wellnessGreen,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                                fontWeight: FontWeight.bold,\n                                fontSize: 13.0,\n                                color: AppColors.wellnessGreen,\n                              )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                      fontSize: 18.0,\n                      color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                      fontWeight: FontWeight.bold,\n                      fontSize: 18.0,\n                      color: AppColors.textDark,\n                    )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\n              fontWeight: FontWeight.bold,\n              color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n              fontSize: 16.0,\n              fontWeight: FontWeight.bold,\n              color: AppColors.textDark,\n            )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0, color: AppColors.textGrey",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0, color: AppColors.textGrey)"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\n              fontWeight: FontWeight.bold,\n              color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n              fontSize: 16.0,\n              fontWeight: FontWeight.bold,\n              color: AppColors.textDark,\n            )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0, color: AppColors.textGrey",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0, color: AppColors.textGrey)"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 18.0,\n                    fontWeight: FontWeight.bold,\n                    color: AppColors.surfaceWhite,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                    fontSize: 18.0,\n                    fontWeight: FontWeight.bold,\n                    color: AppColors.surfaceWhite,\n                  )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.5,\n                    color: AppColors.surfaceWhite.withAlpha(200),",
+    "fullMatch": "GoogleFonts.inter(\n                    fontSize: 12.5,\n                    color: AppColors.surfaceWhite.withAlpha(200),\n                  )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.surfaceWhite,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                        fontSize: 16.0,\n                        fontWeight: FontWeight.bold,\n                        color: AppColors.surfaceWhite,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\home\\home_page.dart",
+    "font": "inter",
+    "args": "fontWeight: FontWeight.bold,\n                        fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\n                        fontWeight: FontWeight.bold,\n                        fontSize: 14.0,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 20.0,\r\n                    fontWeight: FontWeight.bold,\r\n                    color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\r\n                    fontSize: 20.0,\r\n                    fontWeight: FontWeight.bold,\r\n                    color: AppColors.textDark,\r\n                  )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\r\n                    color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\r\n                    fontSize: 14.0,\r\n                    color: AppColors.textGrey,\r\n                  )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\r\n                        fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\r\n                        fontSize: 16.0,\r\n                        fontWeight: FontWeight.bold,\r\n                      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 20.0,\r\n            fontWeight: FontWeight.bold,\r\n            color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\r\n            fontSize: 20.0,\r\n            fontWeight: FontWeight.bold,\r\n            color: AppColors.textDark,\r\n          )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\r\n                          fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\r\n                          color: AppColors.textDark,\r\n                          fontSize: 14.0,\r\n                        )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\r\n                                    fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\r\n                                    color: AppColors.textDark,\r\n                                    fontSize: 14.0,\r\n                                  )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\r\n                                        fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\r\n                                        color: AppColors.textDark,\r\n                                        fontSize: 14.0,\r\n                                      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\r\n                              fontWeight: isSelected\r\n                                  ? FontWeight.bold\r\n                                  : FontWeight.normal,\r\n                              color: isSelected\r\n                                  ? _selectedColor\r\n                                  : AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\r\n                              fontSize: 13.0,\r\n                              fontWeight: isSelected\r\n                                  ? FontWeight.bold\r\n                                  : FontWeight.normal,\r\n                              color: isSelected\r\n                                  ? _selectedColor\r\n                                  : AppColors.textGrey,\r\n                            )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\r\n                              fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\r\n                              color: AppColors.textDark,\r\n                              fontSize: 14.0,\r\n                            )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\r\n                              fontWeight: isSelected\r\n                                  ? FontWeight.bold\r\n                                  : FontWeight.normal,\r\n                              color: isSelected\r\n                                  ? _selectedColor\r\n                                  : AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\r\n                              fontSize: 13.0,\r\n                              fontWeight: isSelected\r\n                                  ? FontWeight.bold\r\n                                  : FontWeight.normal,\r\n                              color: isSelected\r\n                                  ? _selectedColor\r\n                                  : AppColors.textGrey,\r\n                            )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\r\n                                      fontSize: 14.0,\r\n                                      fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\r\n                                      color: AppColors.textDark,\r\n                                      fontSize: 14.0,\r\n                                      fontWeight: FontWeight.bold,\r\n                                    )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.medicalBlue,\r\n                                  fontSize: 13.0,\r\n                                  fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\r\n                                  color: AppColors.medicalBlue,\r\n                                  fontSize: 13.0,\r\n                                  fontWeight: FontWeight.bold,\r\n                                )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\r\n                            fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\r\n                            fontSize: 16.0,\r\n                            fontWeight: FontWeight.bold,\r\n                          )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\r\n        fontWeight: FontWeight.bold,\r\n        color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\r\n        fontSize: 16.0,\r\n        fontWeight: FontWeight.bold,\r\n        color: AppColors.textDark,\r\n      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\r\n          fontWeight: FontWeight.w600,\r\n          color: AppColors.textDark.withAlpha(200),",
+    "fullMatch": "GoogleFonts.inter(\r\n          fontSize: 13.0,\r\n          fontWeight: FontWeight.w600,\r\n          color: AppColors.textDark.withAlpha(200),\r\n        )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\r\n        color: AppColors.textGrey.withAlpha(160),",
+    "fullMatch": "GoogleFonts.inter(\r\n        fontSize: 14.0,\r\n        color: AppColors.textGrey.withAlpha(160),\r\n      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\add_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0, color: Colors.redAccent",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0, color: Colors.redAccent)"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontWeight: FontWeight.bold,\n                    fontSize: 20.0,\n                    color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                    fontWeight: FontWeight.bold,\n                    fontSize: 20.0,\n                    color: AppColors.textDark,\n                  )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 10.0,\n                      fontWeight: FontWeight.bold,\n                      color: AppColors.medicalBlue,",
+    "fullMatch": "GoogleFonts.inter(\n                      fontSize: 10.0,\n                      fontWeight: FontWeight.bold,\n                      color: AppColors.medicalBlue,\n                    )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "fontWeight: FontWeight.bold",
+    "fullMatch": "GoogleFonts.inter(fontWeight: FontWeight.bold)"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 18.0,\n                fontWeight: FontWeight.bold,\n                color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                fontSize: 18.0,\n                fontWeight: FontWeight.bold,\n                color: AppColors.textDark,\n              )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                  color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                  fontSize: 14.0,\n                  color: AppColors.textGrey,\n                )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\n                      fontWeight: FontWeight.bold,\n                      color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                      fontSize: 16.0,\n                      fontWeight: FontWeight.bold,\n                      color: AppColors.textDark,\n                    )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\n                      fontWeight: FontWeight.w600,\n                      color: AppColors.textDark.withAlpha(200),",
+    "fullMatch": "GoogleFonts.inter(\n                      fontSize: 13.0,\n                      fontWeight: FontWeight.w600,\n                      color: AppColors.textDark.withAlpha(200),\n                    )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\n                      color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                      fontSize: 12.0,\n                      color: AppColors.textGrey,\n                    )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 10,\n                          color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                          fontSize: 10,\n                          color: AppColors.textGrey,\n                        )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "color: Colors.redAccent,\n                                  fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\n                                  color: Colors.redAccent,\n                                  fontWeight: FontWeight.bold,\n                                )"
+  },
+  {
+    "file": "lib\\screens\\meds\\medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.medicalBlue,\n                                  fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\n                                  color: AppColors.medicalBlue,\n                                  fontWeight: FontWeight.bold,\n                                )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 20.0,\n                    fontWeight: FontWeight.bold,\n                    color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n                    fontSize: 20.0,\n                    fontWeight: FontWeight.bold,\n                    color: AppColors.textDark,\n                  )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n                    color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                    fontSize: 14.0,\n                    color: AppColors.textGrey,\n                  )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\n                        fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\n                        fontSize: 16.0,\n                        fontWeight: FontWeight.bold,\n                      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 20.0,\n            fontWeight: FontWeight.bold,\n            color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n            fontSize: 20.0,\n            fontWeight: FontWeight.bold,\n            color: AppColors.textDark,\n          )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\n                          fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\n                          color: AppColors.textDark,\n                          fontSize: 14.0,\n                        )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\n                                    fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\n                                    color: AppColors.textDark,\n                                    fontSize: 14.0,\n                                  )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\n                                        fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\n                                        color: AppColors.textDark,\n                                        fontSize: 14.0,\n                                      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\n                              fontWeight: isSelected\n                                  ? FontWeight.bold\n                                  : FontWeight.normal,\n                              color: isSelected\n                                  ? _selectedColor\n                                  : AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                              fontSize: 13.0,\n                              fontWeight: isSelected\n                                  ? FontWeight.bold\n                                  : FontWeight.normal,\n                              color: isSelected\n                                  ? _selectedColor\n                                  : AppColors.textGrey,\n                            )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\n                              fontSize: 14.0,",
+    "fullMatch": "GoogleFonts.inter(\n                              color: AppColors.textDark,\n                              fontSize: 14.0,\n                            )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\n                              fontWeight: isSelected\n                                  ? FontWeight.bold\n                                  : FontWeight.normal,\n                              color: isSelected\n                                  ? _selectedColor\n                                  : AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\n                              fontSize: 13.0,\n                              fontWeight: isSelected\n                                  ? FontWeight.bold\n                                  : FontWeight.normal,\n                              color: isSelected\n                                  ? _selectedColor\n                                  : AppColors.textGrey,\n                            )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.textDark,\n                                      fontSize: 14.0,\n                                      fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\n                                      color: AppColors.textDark,\n                                      fontSize: 14.0,\n                                      fontWeight: FontWeight.bold,\n                                    )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "color: AppColors.medicalBlue,\n                                  fontSize: 13.0,\n                                  fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\n                                  color: AppColors.medicalBlue,\n                                  fontSize: 13.0,\n                                  fontWeight: FontWeight.bold,\n                                )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\n                            fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\n                            fontSize: 16.0,\n                            fontWeight: FontWeight.bold,\n                          )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 16.0,\n        fontWeight: FontWeight.bold,\n        color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\n        fontSize: 16.0,\n        fontWeight: FontWeight.bold,\n        color: AppColors.textDark,\n      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 13.0,\n          fontWeight: FontWeight.w600,\n          color: AppColors.textDark.withAlpha(200),",
+    "fullMatch": "GoogleFonts.inter(\n          fontSize: 13.0,\n          fontWeight: FontWeight.w600,\n          color: AppColors.textDark.withAlpha(200),\n        )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\n        color: AppColors.textGrey.withAlpha(160),",
+    "fullMatch": "GoogleFonts.inter(\n        fontSize: 14.0,\n        color: AppColors.textGrey.withAlpha(160),\n      )"
+  },
+  {
+    "file": "lib\\screens\\meds\\update_medicine_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0, color: Colors.redAccent",
+    "fullMatch": "GoogleFonts.inter(fontSize: 12.0, color: Colors.redAccent)"
+  },
+  {
+    "file": "lib\\screens\\profile\\profile_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 20.0,\r\n                      fontWeight: FontWeight.bold,\r\n                      color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\r\n                      fontSize: 20.0,\r\n                      fontWeight: FontWeight.bold,\r\n                      color: AppColors.textDark,\r\n                    )"
+  },
+  {
+    "file": "lib\\screens\\profile\\profile_page.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\r\n                      color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\r\n                      fontSize: 14.0,\r\n                      color: AppColors.textGrey,\r\n                    )"
+  },
+  {
+    "file": "lib\\screens\\profile\\profile_page.dart",
+    "font": "inter",
+    "args": "fontSize: 10.0,\r\n                            fontWeight: FontWeight.bold,\r\n                            color: AppColors.wellnessGreen,\r\n                            letterSpacing: 0.5,",
+    "fullMatch": "GoogleFonts.inter(\r\n                            fontSize: 10.0,\r\n                            fontWeight: FontWeight.bold,\r\n                            color: AppColors.wellnessGreen,\r\n                            letterSpacing: 0.5,\r\n                          )"
+  },
+  {
+    "file": "lib\\screens\\profile\\profile_page.dart",
+    "font": "inter",
+    "args": "fontSize: 16.0,\r\n                    fontWeight: FontWeight.bold,",
+    "fullMatch": "GoogleFonts.inter(\r\n                    fontSize: 16.0,\r\n                    fontWeight: FontWeight.bold,\r\n                  )"
+  },
+  {
+    "file": "lib\\screens\\profile\\profile_page.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 15.0,\r\n                          fontWeight: FontWeight.bold,\r\n                          color: AppColors.textDark,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\r\n                          fontSize: 15.0,\r\n                          fontWeight: FontWeight.bold,\r\n                          color: AppColors.textDark,\r\n                        )"
+  },
+  {
+    "file": "lib\\screens\\profile\\profile_page.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\r\n                          color: AppColors.textGrey,",
+    "fullMatch": "GoogleFonts.inter(\r\n                          fontSize: 12.0,\r\n                          color: AppColors.textGrey,\r\n                        )"
+  },
+  {
+    "file": "lib\\screens\\splash\\splash_screen.dart",
+    "font": "plusJakartaSans",
+    "args": "fontSize: 32.0,\r\n                            fontWeight: FontWeight.bold,\r\n                            color: Colors.white,\r\n                            letterSpacing: -0.5,",
+    "fullMatch": "GoogleFonts.plusJakartaSans(\r\n                            fontSize: 32.0,\r\n                            fontWeight: FontWeight.bold,\r\n                            color: Colors.white,\r\n                            letterSpacing: -0.5,\r\n                          )"
+  },
+  {
+    "file": "lib\\screens\\splash\\splash_screen.dart",
+    "font": "inter",
+    "args": "fontSize: 14.0,\r\n                        fontWeight: FontWeight.w400,\r\n                        color: Colors.white.withAlpha(200),\r\n                        letterSpacing: 0.2,",
+    "fullMatch": "GoogleFonts.inter(\r\n                        fontSize: 14.0,\r\n                        fontWeight: FontWeight.w400,\r\n                        color: Colors.white.withAlpha(200),\r\n                        letterSpacing: 0.2,\r\n                      )"
+  },
+  {
+    "file": "lib\\screens\\splash\\splash_screen.dart",
+    "font": "inter",
+    "args": "fontSize: 12.0,\r\n                        fontWeight: FontWeight.w500,\r\n                        color: Colors.white.withAlpha(128),",
+    "fullMatch": "GoogleFonts.inter(\r\n                        fontSize: 12.0,\r\n                        fontWeight: FontWeight.w500,\r\n                        color: Colors.white.withAlpha(128),\r\n                      )"
+  }
+]

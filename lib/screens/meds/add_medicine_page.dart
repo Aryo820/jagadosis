@@ -6,13 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AddMedicinePage extends StatefulWidget {
   final VoidCallback? onMedicineAdded;
-  final MedicineModel? existingMedicine;
 
-  const AddMedicinePage({
-    super.key,
-    this.onMedicineAdded,
-    this.existingMedicine,
-  });
+  const AddMedicinePage({super.key, this.onMedicineAdded});
 
   @override
   State<AddMedicinePage> createState() => _AddMedicinePageState();
@@ -45,7 +40,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
     'Sebelum Makan',
     'Sesudah Makan',
     'Bersama Makanan',
-    'Waktu Tidur',
+    'Sebelum Tidur',
   ];
 
   @override

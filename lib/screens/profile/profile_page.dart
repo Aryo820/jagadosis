@@ -81,44 +81,6 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2.0),
-                  Text(
-                    PreferenceHandler.userEmail,
-                    style: GoogleFonts.inter(
-                      fontSize: 14.0,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 12.0),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 6.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE6F7ED),
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.verified_user_rounded,
-                          size: 16.0,
-                          color: AppColors.wellnessGreen,
-                        ),
-                        const SizedBox(width: 6.0),
-                        Text(
-                          'AKUN TERVERIFIKASI',
-                          style: GoogleFonts.inter(
-                            fontSize: 10.0,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.wellnessGreen,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -171,7 +133,6 @@ class ProfilePage extends StatelessWidget {
                     );
                   }
                 },
-
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEB5757),
                   foregroundColor: AppColors.surfaceWhite,

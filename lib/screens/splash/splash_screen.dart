@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/screens/auth/login_page.dart';
 import 'package:aplikasi/screens/dashboard_page.dart';
-import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -78,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     // Navigate to Login Screen after 3 seconds
-    _timer = Timer(const Duration(seconds: 3), _navigateToHome);
+    _timer = Timer(const Duration(seconds: 15), _navigateToHome);
   }
 
   void _navigateToHome() {
@@ -166,8 +165,8 @@ class _SplashScreenState extends State<SplashScreen>
                       );
                     },
                     child: Container(
-                      width: 96.0,
-                      height: 96.0,
+                      width: 196,
+                      height: 196,
                       decoration: BoxDecoration(
                         color: Colors.white.withAlpha(230),
                         shape: BoxShape.circle,
@@ -179,11 +178,10 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ],
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.medical_services_rounded,
-                          size: 48.0,
-                          color: AppColors.medicalBlue,
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
@@ -191,32 +189,32 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 24.0),
 
                   // Animated Text (Title + Tagline)
-                  AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _textFadeAnimation.value,
-                        child: FractionalTranslation(
-                          translation: _textSlideAnimation.value,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Column(
-                      children: [
-                        Text(
-                          'JagaDosis',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 32.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 8.0),
-                      ],
-                    ),
-                  ),
+                  // AnimatedBuilder(
+                  //   animation: _controller,
+                  //   builder: (context, child) {
+                  //     return Opacity(
+                  //       opacity: _textFadeAnimation.value,
+                  //       child: FractionalTranslation(
+                  //         translation: _textSlideAnimation.value,
+                  //         child: child,
+                  //       ),
+                  //     );
+                  //   },
+                  //   child: Column(
+                  //     children: [
+                  //       Text(
+                  //         'JagaDosis',
+                  //         style: GoogleFonts.plusJakartaSans(
+                  //           fontSize: 32.0,
+                  //           fontWeight: FontWeight.bold,
+                  //           color: Colors.white,
+                  //           letterSpacing: -0.5,
+                  //         ),
+                  //       ),
+                  //       const SizedBox(height: 8.0),
+                  //     ],
+                  //   ),
+                  // ),
 
                   // Animated Tagline
                   AnimatedBuilder(

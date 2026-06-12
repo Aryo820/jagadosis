@@ -18,19 +18,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _agreeToTerms = false;
 
   void register() async {
     if (_formKey.currentState!.validate()) {
-      if (!_agreeToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Anda harus menyetujui Syarat & Ketentuan'),
-          ),
-        );
-        return;
-      }
-
       // Create user model
       final user = UserModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -109,7 +99,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     Text(
                       'JagaDosis',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24.0,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: AppColors.medicalBlue,
                         letterSpacing: -0.5,
@@ -368,30 +358,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 return null;
                               },
                             ),
-                            // Agree to Terms Checkbox
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: _agreeToTerms,
-                                  activeColor: AppColors.medicalBlue,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _agreeToTerms = value ?? false;
-                                    });
-                                  },
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    'Saya menyetujui Syarat & Ketentuan',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13.0,
-                                      color: AppColors.textGrey,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16.0),
+
+                            const SizedBox(height: 24.0),
 
                             // Register Button
                             SizedBox(

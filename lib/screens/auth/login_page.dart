@@ -100,35 +100,11 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Brand / Logo Area
-                    const SizedBox(height: 24.0),
-                    Container(
-                      width: 64.0,
-                      height: 64.0,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryContainer,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4.0,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.medical_services_rounded,
-                          size: 32.0,
-                          color: AppColors.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12.0),
+                    const SizedBox(height: 12),
                     Text(
                       'JagaDosis',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24.0,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: AppColors.medicalBlue,
                         letterSpacing: -0.5,
