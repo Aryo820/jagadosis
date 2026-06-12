@@ -77,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     // Navigate to Login Screen after 3 seconds
-    _timer = Timer(const Duration(seconds: 15), _navigateToHome);
+    _timer = Timer(const Duration(seconds: 4), _navigateToHome);
   }
 
   void _navigateToHome() {

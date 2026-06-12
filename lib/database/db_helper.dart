@@ -80,6 +80,15 @@ class DatabaseService {
         $columnStatus TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+          CREATE TABLE users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT UNIQUE,
+            password TEXT
+          )
+        ''');
   }
 
   /// Callback to upgrade the database schema when version is incremented.
