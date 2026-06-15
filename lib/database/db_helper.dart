@@ -20,7 +20,7 @@ class DatabaseService {
 
   // Database name and version constants
   static const String _dbName = 'jagadosis.db';
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
 
   // Table names constants
   static const String tableMedicines = 'medicines';
@@ -34,6 +34,7 @@ class DatabaseService {
   // Medicines table column constants
   static const String columnDose = 'dose';
   static const String columnScheduleTime = 'scheduleTime';
+  static const String columnEnableNotification = 'enableNotification';
 
   // Histories table column constants
   static const String columnTakenAt = 'takenAt';
@@ -67,7 +68,8 @@ class DatabaseService {
         $columnMedicineName TEXT NOT NULL,
         $columnDose TEXT NOT NULL,
         $columnScheduleTime TEXT NOT NULL,
-        $columnStatus TEXT NOT NULL
+        $columnStatus TEXT NOT NULL,
+        $columnEnableNotification INTEGER NOT NULL DEFAULT 1
       )
     ''');
 

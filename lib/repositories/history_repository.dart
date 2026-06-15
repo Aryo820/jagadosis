@@ -40,4 +40,34 @@ class HistoryRepository {
     );
     return maps.map((map) => HistoryModel.fromMap(map)).toList();
   }
+
+  /// Retrieves history entries filtered by a specific month.
+  Future<List<HistoryModel>> getHistoriesByMonth(int year, int month) async {
+    final String startDate = DateFormat('yyyy-MM-dd').format(DateTime(year, month, 1));
+    final String endDate = DateFormat('yyyy-MM-dd').format(
+      DateTime(year, month + 1, 0, 23, 59, 59),
+    );
+    final List<Map<String, dynamic>> maps = await _dbService.query(
+      DatabaseService.tableHistories,
+      where: '${DatabaseService.columnTakenAt} BETWEEN ? AND ?',
+      whereArgs: [startDate, endDate],
+      orderBy: '${DatabaseService.columnTakenAt} DESC',
+    );
+    return maps.map((map) => HistoryModel.fromMap(map)).toList();
+  }
+
+  /// Retrieves history entries filtered by a specific year.
+  Future<List<HistoryModel>> getHistoriesByYear(int year) async {
+    final String startDate = DateFormat('yyyy-MM-dd').format(DateTime(year, 1, 1));
+    final String endDate = DateFormat('yyyy-MM-dd').format(
+      DateTime(year, 12, 31, 23, 59, 59),
+    );
+    final List<Map<String, dynamic>> maps = await _dbService.query(
+      DatabaseService.tableHistories,
+      where: '${DatabaseService.columnTakenAt} BETWEEN ? AND ?',
+      whereArgs: [startDate, endDate],
+      orderBy: '${DatabaseService.columnTakenAt} DESC',
+    );
+    return maps.map((map) => HistoryModel.fromMap(map)).toList();
+  }
 }
