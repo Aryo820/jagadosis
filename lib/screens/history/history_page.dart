@@ -115,16 +115,36 @@ class _HistoryPageState extends State<HistoryPage>
 
   String _getMonthName(int month) {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return months[month - 1];
   }
 
   String _getShortMonthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return months[month - 1];
   }
@@ -135,7 +155,13 @@ class _HistoryPageState extends State<HistoryPage>
 
   String _getFormattedDay(DateTime date) {
     const days = [
-      'Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu',
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
     ];
     return '${days[date.weekday % 7]}, ${date.day} ${_getMonthName(date.month)}';
   }
@@ -170,10 +196,7 @@ class _HistoryPageState extends State<HistoryPage>
             const SizedBox(height: 24.0),
 
             // Data section
-            FadeTransition(
-              opacity: _fadeAnim,
-              child: _buildDataSection(),
-            ),
+            FadeTransition(opacity: _fadeAnim, child: _buildDataSection()),
           ],
         ),
       ),
@@ -239,9 +262,7 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  // ==========================================
   // CALENDAR SECTION
-  // ==========================================
 
   Widget _buildCalendarSection() {
     switch (_viewMode) {
@@ -296,7 +317,8 @@ class _HistoryPageState extends State<HistoryPage>
           scrollDirection: Axis.horizontal,
           child: Row(
             children: _getWeekDays().map((date) {
-              final isSameDay = date.year == _selectedDate.year &&
+              final isSameDay =
+                  date.year == _selectedDate.year &&
                   date.month == _selectedDate.month &&
                   date.day == _selectedDate.day;
               return GestureDetector(
@@ -424,101 +446,101 @@ class _HistoryPageState extends State<HistoryPage>
           const SizedBox(height: 8.0),
 
           // Calendar grid
-          ...List.generate(
-            ((leadingBlanks + daysInMonth) / 7).ceil(),
-            (weekIndex) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: List.generate(7, (dayIndex) {
-                    final cellIndex = weekIndex * 7 + dayIndex;
-                    final dayNum = cellIndex - leadingBlanks + 1;
+          ...List.generate(((leadingBlanks + daysInMonth) / 7).ceil(), (
+            weekIndex,
+          ) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(7, (dayIndex) {
+                  final cellIndex = weekIndex * 7 + dayIndex;
+                  final dayNum = cellIndex - leadingBlanks + 1;
 
-                    if (dayNum < 1 || dayNum > daysInMonth) {
-                      return const SizedBox(width: 36.0, height: 36.0);
-                    }
+                  if (dayNum < 1 || dayNum > daysInMonth) {
+                    return const SizedBox(width: 36.0, height: 36.0);
+                  }
 
-                    final cellDate = DateTime(
-                      _displayedMonth.year,
-                      _displayedMonth.month,
-                      dayNum,
-                    );
-                    final isToday = cellDate.year == now.year &&
-                        cellDate.month == now.month &&
-                        cellDate.day == now.day;
-                    final isSelected =
-                        cellDate.year == _selectedDate.year &&
-                        cellDate.month == _selectedDate.month &&
-                        cellDate.day == _selectedDate.day;
-                    final isFuture = cellDate.isAfter(now);
+                  final cellDate = DateTime(
+                    _displayedMonth.year,
+                    _displayedMonth.month,
+                    dayNum,
+                  );
+                  final isToday =
+                      cellDate.year == now.year &&
+                      cellDate.month == now.month &&
+                      cellDate.day == now.day;
+                  final isSelected =
+                      cellDate.year == _selectedDate.year &&
+                      cellDate.month == _selectedDate.month &&
+                      cellDate.day == _selectedDate.day;
+                  final isFuture = cellDate.isAfter(now);
 
-                    // Check if this date has logs
-                    final hasLogs = _histories.any(
-                      (h) =>
-                          h.takenAt.year == cellDate.year &&
-                          h.takenAt.month == cellDate.month &&
-                          h.takenAt.day == cellDate.day,
-                    );
+                  // Check if this date has logs
+                  final hasLogs = _histories.any(
+                    (h) =>
+                        h.takenAt.year == cellDate.year &&
+                        h.takenAt.month == cellDate.month &&
+                        h.takenAt.day == cellDate.day,
+                  );
 
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedDate = cellDate;
-                          // Switch to weekly mode to show daily detail
-                          _viewMode = CalendarViewMode.weekly;
-                        });
-                        _loadHistory();
-                      },
-                      child: Container(
-                        width: 36.0,
-                        height: 36.0,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.medicalBlue
-                              : isToday
-                                  ? AppColors.medicalBlue.withAlpha(20)
-                                  : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              dayNum.toString(),
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13.0,
-                                fontWeight: isToday || isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? Colors.white
-                                    : isFuture
-                                        ? AppColors.textDark.withAlpha(100)
-                                        : isToday
-                                            ? AppColors.medicalBlue
-                                            : AppColors.textDark,
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedDate = cellDate;
+                        // Switch to weekly mode to show daily detail
+                        _viewMode = CalendarViewMode.weekly;
+                      });
+                      _loadHistory();
+                    },
+                    child: Container(
+                      width: 36.0,
+                      height: 36.0,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.medicalBlue
+                            : isToday
+                            ? AppColors.medicalBlue.withAlpha(20)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            dayNum.toString(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.0,
+                              fontWeight: isToday || isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? Colors.white
+                                  : isFuture
+                                  ? AppColors.textDark.withAlpha(100)
+                                  : isToday
+                                  ? AppColors.medicalBlue
+                                  : AppColors.textDark,
+                            ),
+                          ),
+                          if (hasLogs && !isSelected)
+                            Container(
+                              width: 4.0,
+                              height: 4.0,
+                              margin: const EdgeInsets.only(top: 2.0),
+                              decoration: const BoxDecoration(
+                                color: AppColors.wellnessGreen,
+                                shape: BoxShape.circle,
                               ),
                             ),
-                            if (hasLogs && !isSelected)
-                              Container(
-                                width: 4.0,
-                                height: 4.0,
-                                margin: const EdgeInsets.only(top: 2.0),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.wellnessGreen,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
-                    );
-                  }),
-                ),
-              );
-            },
-          ),
+                    ),
+                  );
+                }),
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -601,15 +623,18 @@ class _HistoryPageState extends State<HistoryPage>
               final month = index + 1;
               final isCurrentMonth =
                   _displayedYear == now.year && month == now.month;
-              final isFutureMonth = _displayedYear > now.year ||
+              final isFutureMonth =
+                  _displayedYear > now.year ||
                   (_displayedYear == now.year && month > now.month);
 
               // Count logs for this month
-              final monthLogCount = _histories.where(
-                (h) =>
-                    h.takenAt.year == _displayedYear &&
-                    h.takenAt.month == month,
-              ).length;
+              final monthLogCount = _histories
+                  .where(
+                    (h) =>
+                        h.takenAt.year == _displayedYear &&
+                        h.takenAt.month == month,
+                  )
+                  .length;
 
               return GestureDetector(
                 onTap: () {
@@ -646,8 +671,8 @@ class _HistoryPageState extends State<HistoryPage>
                           color: isFutureMonth
                               ? AppColors.textDark.withAlpha(100)
                               : isCurrentMonth
-                                  ? AppColors.medicalBlue
-                                  : AppColors.textDark,
+                              ? AppColors.medicalBlue
+                              : AppColors.textDark,
                         ),
                       ),
                       if (monthLogCount > 0) ...[
@@ -672,18 +697,13 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  // ==========================================
   // DATA SECTION
-  // ==========================================
-
   Widget _buildDataSection() {
     if (_isLoading) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 40.0),
-          child: CircularProgressIndicator(
-            color: AppColors.medicalBlue,
-          ),
+          child: CircularProgressIndicator(color: AppColors.medicalBlue),
         ),
       );
     }
@@ -995,9 +1015,7 @@ class _HistoryPageState extends State<HistoryPage>
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: AppColors.outlineVariant.withAlpha(50),
-        ),
+        border: Border.all(color: AppColors.outlineVariant.withAlpha(50)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(10),
