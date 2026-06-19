@@ -9,6 +9,22 @@ class PreferenceHandler {
   static const _keyIsLogin = "isLogin";
   static const _keyUserName = "userName";
   static const _keyUserEmail = "userEmail";
+  static const _keyProfilePhoto = "profilePhoto";
+
+  // Data Diri Keys
+  static const _keyUserBirthDate = "userBirthDate";
+  static const _keyUserGender = "userGender";
+  static const _keyUserBloodType = "userBloodType";
+  static const _keyUserAllergies = "userAllergies";
+
+  // Notification Settings Keys
+  static const _keyNotificationGlobal = "notificationGlobal";
+  static const _keyNotificationSound = "notificationSound";
+  static const _keyNotificationVibration = "notificationVibration";
+  static const _keyNotificationSnooze = "notificationSnooze";
+
+  // Emergency Contacts Keys
+  static const _keyEmergencyContacts = "emergencyContacts";
 
   static Future<void> setLogin(bool isLogin) async {
     await _prefs.setBool(_keyIsLogin, isLogin);
@@ -32,9 +48,57 @@ class PreferenceHandler {
     return _prefs.getString(_keyUserEmail) ?? '';
   }
 
+  /// Saves the absolute file path of the user's profile photo.
+  static Future<void> saveProfilePhoto(String path) async {
+    await _prefs.setString(_keyProfilePhoto, path);
+  }
+
+  /// Returns the stored profile photo path, or null if none is set.
+  static String? get profilePhoto {
+    return _prefs.getString(_keyProfilePhoto);
+  }
+
+  /// Removes the stored profile photo path.
+  static Future<void> removeProfilePhoto() async {
+    await _prefs.remove(_keyProfilePhoto);
+  }
+
+  // --- DATA DIRI HELPERS ---
+  static Future<void> saveBirthDate(String date) async => await _prefs.setString(_keyUserBirthDate, date);
+  static String get userBirthDate => _prefs.getString(_keyUserBirthDate) ?? '';
+
+  static Future<void> saveGender(String gender) async => await _prefs.setString(_keyUserGender, gender);
+  static String get userGender => _prefs.getString(_keyUserGender) ?? '';
+
+  static Future<void> saveBloodType(String bloodType) async => await _prefs.setString(_keyUserBloodType, bloodType);
+  static String get userBloodType => _prefs.getString(_keyUserBloodType) ?? '';
+
+  static Future<void> saveAllergies(String allergies) async => await _prefs.setString(_keyUserAllergies, allergies);
+  static String get userAllergies => _prefs.getString(_keyUserAllergies) ?? '';
+
+  // --- NOTIFICATION SETTINGS HELPERS ---
+  static Future<void> setNotificationGlobal(bool value) async => await _prefs.setBool(_keyNotificationGlobal, value);
+  static bool get notificationGlobal => _prefs.getBool(_keyNotificationGlobal) ?? true;
+
+  static Future<void> setNotificationSound(bool value) async => await _prefs.setBool(_keyNotificationSound, value);
+  static bool get notificationSound => _prefs.getBool(_keyNotificationSound) ?? true;
+
+  static Future<void> setNotificationVibration(bool value) async => await _prefs.setBool(_keyNotificationVibration, value);
+  static bool get notificationVibration => _prefs.getBool(_keyNotificationVibration) ?? true;
+
+  static Future<void> setNotificationSnooze(int minutes) async => await _prefs.setInt(_keyNotificationSnooze, minutes);
+  static int get notificationSnooze => _prefs.getInt(_keyNotificationSnooze) ?? 10; // Default 10 minutes
+
+  // --- EMERGENCY CONTACTS HELPERS ---
+  static Future<void> saveEmergencyContacts(String jsonString) async => await _prefs.setString(_keyEmergencyContacts, jsonString);
+  static String get emergencyContacts => _prefs.getString(_keyEmergencyContacts) ?? '[]';
+
   static Future<void> logOut() async {
     await _prefs.remove(_keyIsLogin);
     await _prefs.remove(_keyUserName);
     await _prefs.remove(_keyUserEmail);
+    // Optional: clear health-related preferences or keep them. We keep them or clear them.
+    // Let's keep them so if they relogin, it's personal to the device, or we can clear them.
+    // Standard logout clears login credentials only. Let's keep it consistent.
   }
 }

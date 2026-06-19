@@ -8,7 +8,7 @@
 PRODUCT_NAME = aplikasi
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.aplikasi
+PRODUCT_BUNDLE_IDENTIFIER = com.yoo.jagadosis
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
