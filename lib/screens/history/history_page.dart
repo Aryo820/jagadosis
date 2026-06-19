@@ -1160,18 +1160,20 @@ class _HistoryPageState extends State<HistoryPage>
   Widget _buildHistoryCard(HistoryModel log) {
     final timeString =
         '${log.takenAt.hour.toString().padLeft(2, '0')}:${log.takenAt.minute.toString().padLeft(2, '0')}';
+    final isMissed = log.status == 'missed';
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: _buildLogCard(
         log.medicineName,
-        'Obat diminum tepat waktu',
+        isMissed ? 'Obat terlewat' : 'Obat diminum tepat waktu',
         log.status.toUpperCase(),
         timeString,
-        AppColors.wellnessGreen,
-        Icons.check_circle_rounded,
+        isMissed ? const Color(0xFFEB5757) : AppColors.wellnessGreen,
+        isMissed ? Icons.cancel_rounded : Icons.check_circle_rounded,
       ),
     );
   }
+
 
   Widget _buildCalendarDay(
     String dayName,

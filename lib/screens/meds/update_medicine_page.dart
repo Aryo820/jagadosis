@@ -19,16 +19,47 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
   final _dosageValueController = TextEditingController();
 
   // Selections
-  String _selectedDosageUnit = 'mg';
-  String _selectedForm = 'Tablet';
+  String _selectedDosageUnit = 'Tablet';
   String _selectedFrequency = '1x Sehari';
   String _selectedFoodRelation = 'Sesudah Makan';
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
+  List<TimeOfDay> _selectedTimes = [const TimeOfDay(hour: 8, minute: 0)];
+
+  void _updateTimePickersCount(String frequency) {
+    int count = 1;
+    if (frequency == '2x Sehari') {
+      count = 2;
+    } else if (frequency == '3x Sehari') {
+      count = 3;
+    } else if (frequency == '4x Sehari') {
+      count = 4;
+    }
+
+    if (_selectedTimes.length < count) {
+      final List<TimeOfDay> defaultTimes = [
+        const TimeOfDay(hour: 8, minute: 0),
+        const TimeOfDay(hour: 20, minute: 0),
+        const TimeOfDay(hour: 14, minute: 0),
+        const TimeOfDay(hour: 6, minute: 0),
+      ];
+      while (_selectedTimes.length < count) {
+        _selectedTimes.add(defaultTimes[_selectedTimes.length % defaultTimes.length]);
+      }
+    } else if (_selectedTimes.length > count) {
+      _selectedTimes = _selectedTimes.sublist(0, count);
+    }
+  }
 
   final Color _selectedColor = AppColors.medicalBlue;
 
-  final List<String> _dosageUnits = ['mg', 'mcg', 'ml', 'IU', 'gr', 'Pil', 'L'];
-  final List<String> _forms = ['Tablet', 'Kapsul', 'Sirup', 'Injeksi', 'Tetes'];
+  final List<String> _dosageUnits = [
+    'Tablet',
+    'Kapsul',
+    'Sendok Makan (sdm)',
+    'Sendok Teh (sdt)',
+    'Tetes',
+    'Semprot',
+    'Sachet / Bungkus',
+  ];
   final List<String> _frequencies = [
     '1x Sehari',
     '2x Sehari',
@@ -49,15 +80,15 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
     final med = widget.medicine;
     _nameController.text = med.medicineName;
 
-    // Parse dose string: "500 mg • Tablet • Sesudah Makan • 1x Sehari"
+    // Parse dose string: can be "500 mg • Tablet • Sesudah Makan • 1x Sehari" or "1 Tablet • Sesudah Makan • 1x Sehari"
     final parts = med.dose.split(' • ');
     if (parts.length >= 4) {
+      // Old format
       final dosageAndUnit = parts[0].trim();
-      final form = parts[1].trim();
       final relation = parts[2].trim();
       final frequency = parts[3].trim();
 
-      // Parse dosage and unit: "500 mg"
+      // Parse dosage and unit
       final dosageParts = dosageAndUnit.split(' ');
       if (dosageParts.isNotEmpty) {
         _dosageValueController.text = dosageParts[0];
@@ -70,10 +101,33 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
         }
       }
 
-      if (!_forms.contains(form)) {
-        _forms.add(form);
+      if (!_foodRelations.contains(relation)) {
+        _foodRelations.add(relation);
       }
-      _selectedForm = form;
+      _selectedFoodRelation = relation;
+
+      if (!_frequencies.contains(frequency)) {
+        _frequencies.add(frequency);
+      }
+      _selectedFrequency = frequency;
+    } else if (parts.length == 3) {
+      // New format
+      final dosageAndUnit = parts[0].trim();
+      final relation = parts[1].trim();
+      final frequency = parts[2].trim();
+
+      // Parse dosage and unit
+      final dosageParts = dosageAndUnit.split(' ');
+      if (dosageParts.isNotEmpty) {
+        _dosageValueController.text = dosageParts[0];
+        if (dosageParts.length > 1) {
+          final unit = dosageParts.sublist(1).join(' ');
+          if (!_dosageUnits.contains(unit)) {
+            _dosageUnits.add(unit);
+          }
+          _selectedDosageUnit = unit;
+        }
+      }
 
       if (!_foodRelations.contains(relation)) {
         _foodRelations.add(relation);
@@ -85,18 +139,25 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
       }
       _selectedFrequency = frequency;
     } else {
-      // Fallback if dose format is simple or doesn't match
+      // Fallback
       _dosageValueController.text = med.dose;
     }
 
-    // Parse scheduleTime: "08:00"
-    final timeParts = med.scheduleTime.split(':');
-    if (timeParts.length == 2) {
-      final hour = int.tryParse(timeParts[0]);
-      final minute = int.tryParse(timeParts[1]);
-      if (hour != null && minute != null) {
-        _selectedTime = TimeOfDay(hour: hour, minute: minute);
+    // Parse scheduleTime: e.g. "08:00, 20:00"
+    final timesList = med.scheduleTime.split(', ');
+    _selectedTimes = [];
+    for (final tStr in timesList) {
+      final timeParts = tStr.trim().split(':');
+      if (timeParts.length == 2) {
+        final hour = int.tryParse(timeParts[0]);
+        final minute = int.tryParse(timeParts[1]);
+        if (hour != null && minute != null) {
+          _selectedTimes.add(TimeOfDay(hour: hour, minute: minute));
+        }
       }
+    }
+    if (_selectedTimes.isEmpty) {
+      _selectedTimes.add(const TimeOfDay(hour: 8, minute: 0));
     }
   }
 
@@ -109,12 +170,21 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
 
   void _saveMedication() async {
     if (_formKey.currentState!.validate()) {
-      final String formattedTime =
-          '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+      // Sort times chronologically
+      final sortedTimes = List<TimeOfDay>.from(_selectedTimes)
+        ..sort((a, b) {
+          final aMinutes = a.hour * 60 + a.minute;
+          final bMinutes = b.hour * 60 + b.minute;
+          return aMinutes.compareTo(bMinutes);
+        });
 
-      // Combine dose, unit, form, relation and frequency to display comprehensive info in UI
+      final String formattedTime = sortedTimes.map((t) {
+        return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      }).join(', ');
+
+      // Combine dose, unit, relation and frequency to display comprehensive info in UI
       final String doseDescription =
-          '${_dosageValueController.text} $_selectedDosageUnit • $_selectedForm • $_selectedFoodRelation • $_selectedFrequency';
+          '${_dosageValueController.text} $_selectedDosageUnit • $_selectedFoodRelation • $_selectedFrequency';
 
       final updatedMedicine = MedicineModel(
         id: widget.medicine.id,
@@ -356,47 +426,6 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16.0),
-
-                      // Bentuk Sediaan
-                      _buildLabel('Bentuk Sediaan'),
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 8.0,
-                        children: _forms.map((form) {
-                          final isSelected = _selectedForm == form;
-                          return ChoiceChip(
-                            label: Text(form),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              if (selected) {
-                                setState(() => _selectedForm = form);
-                              }
-                            },
-                            selectedColor: _selectedColor.withAlpha(40),
-                            labelStyle: GoogleFonts.inter(
-                              fontSize: 13.0,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isSelected
-                                  ? _selectedColor
-                                  : AppColors.textGrey,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? _selectedColor
-                                    : AppColors.outlineVariant.withAlpha(150),
-                                width: isSelected ? 1.5 : 1.0,
-                              ),
-                            ),
-                            showCheckmark: false,
-                            backgroundColor: Colors.transparent,
-                          );
-                        }).toList(),
-                      ),
                     ],
                   ),
                 ),
@@ -437,7 +466,10 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
                             }).toList(),
                             onChanged: (newValue) {
                               if (newValue != null) {
-                                setState(() => _selectedFrequency = newValue);
+                                setState(() {
+                                  _selectedFrequency = newValue;
+                                  _updateTimePickersCount(newValue);
+                                });
                               }
                             },
                           ),
@@ -488,60 +520,76 @@ class _UpdateMedicinePageState extends State<UpdateMedicinePage> {
                       ),
                       const SizedBox(height: 16.0),
 
-                      // Waktu Konsumsi
-                      _buildLabel('Waktu Konsumsi'),
-                      InkWell(
-                        onTap: () async {
-                          final TimeOfDay? picked = await showTimePicker(
-                            context: context,
-                            initialTime: _selectedTime,
-                          );
-                          if (picked != null && picked != _selectedTime) {
-                            setState(() {
-                              _selectedTime = picked;
-                            });
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 14.0,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.outlineVariant),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.access_time_rounded,
-                                    color: AppColors.textGrey,
+                      // Waktu Konsumsi (Alarm)
+                      _buildLabel(_selectedFrequency == 'Sesuai Kebutuhan'
+                          ? 'Waktu Konsumsi (Opsional)'
+                          : 'Waktu Konsumsi (Alarm)'),
+                      Column(
+                        children: List.generate(_selectedTimes.length, (index) {
+                          final timeStr = _selectedTimes[index].format(context);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: InkWell(
+                              onTap: () async {
+                                final TimeOfDay? picked = await showTimePicker(
+                                  context: context,
+                                  initialTime: _selectedTimes[index],
+                                );
+                                if (picked != null &&
+                                    picked != _selectedTimes[index]) {
+                                  setState(() {
+                                    _selectedTimes[index] = picked;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 14.0,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: AppColors.outlineVariant,
                                   ),
-                                  const SizedBox(width: 12.0),
-                                  Text(
-                                    _selectedTime.format(context),
-                                    style: GoogleFonts.inter(
-                                      color: AppColors.textDark,
-                                      fontSize: 14.0,
-                                      fontWeight: FontWeight.bold,
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.access_time_rounded,
+                                          color: AppColors.textGrey,
+                                        ),
+                                        const SizedBox(width: 12.0),
+                                        Text(
+                                          _selectedFrequency == 'Sesuai Kebutuhan'
+                                              ? 'Waktu: $timeStr'
+                                              : 'Alarm ke-${index + 1}: $timeStr',
+                                          style: GoogleFonts.inter(
+                                            color: AppColors.textDark,
+                                            fontSize: 14.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                'Ubah Waktu',
-                                style: GoogleFonts.inter(
-                                  color: AppColors.medicalBlue,
-                                  fontSize: 13.0,
-                                  fontWeight: FontWeight.bold,
+                                    Text(
+                                      'Ubah Waktu',
+                                      style: GoogleFonts.inter(
+                                        color: AppColors.medicalBlue,
+                                        fontSize: 13.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        }),
                       ),
                     ],
                   ),

@@ -104,29 +104,33 @@ class _MedsPageState extends State<MedsPage> {
               _buildEmptyState()
             else
               ..._medicines.map((medicine) {
-                // Parse dose components: "value unit • form • relation • frequency"
                 final parts = medicine.dose.split(' • ');
-                final dosage = parts.isNotEmpty ? parts[0] : medicine.dose;
-                final form = parts.length > 1 ? parts[1] : '';
-                final relation = parts.length > 2 ? parts[2] : '';
-                final frequency = parts.length > 3 ? parts[3] : '';
+                final isOldFormat = parts.length >= 4;
 
-                // Map form to appropriate icon and color
+                final dosage = parts.isNotEmpty ? parts[0] : medicine.dose;
+                final form = isOldFormat ? parts[1] : '';
+                final relation = isOldFormat ? parts[2] : (parts.length > 1 ? parts[1] : '');
+                final frequency = isOldFormat ? parts[3] : (parts.length > 2 ? parts[2] : '');
+
+                // Map form or dosage text to appropriate icon and color
                 IconData icon = Icons.medication_rounded;
                 Color color = AppColors.medicalBlue;
-                if (form.toLowerCase().contains('kapsul')) {
+
+                final checkText = (form.isNotEmpty ? form : dosage).toLowerCase();
+                if (checkText.contains('kapsul')) {
                   icon = Icons.healing_rounded;
                   color = AppColors.wellnessGreen;
-                } else if (form.toLowerCase().contains('sirup')) {
+                } else if (checkText.contains('sirup') || checkText.contains('sendok') || checkText.contains('ml')) {
                   icon = Icons.vaccines_rounded;
                   color = const Color(0xFF934700);
-                } else if (form.toLowerCase().contains('tetes')) {
+                } else if (checkText.contains('tetes')) {
                   icon = Icons.opacity_rounded;
                   color = Colors.teal;
                 }
 
-                final doseText =
-                    '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}';
+                final doseText = isOldFormat
+                    ? '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}'
+                    : dosage;
                 final instructionText =
                     '${frequency.isNotEmpty ? frequency : '1x Sehari'}${relation.isNotEmpty ? ' • $relation' : ''}';
 

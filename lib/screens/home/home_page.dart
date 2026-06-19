@@ -38,23 +38,77 @@ class _HomePageState extends State<HomePage> {
     _loadData();
   }
 
+  /// Parses a scheduleTime string (e.g. "08:00" or "08:00, 20:00") and
+  /// returns true if ALL times in the schedule have already passed today.
+  bool _allTimesHavePassed(String scheduleTime) {
+    final now = DateTime.now();
+    final nowMinutes = now.hour * 60 + now.minute;
+
+    // scheduleTime can be "08:00" or "08:00, 20:00"
+    final parts = scheduleTime.split(',').map((s) => s.trim()).toList();
+    for (final part in parts) {
+      final timeParts = part.split(':');
+      if (timeParts.length != 2) continue;
+      final hour = int.tryParse(timeParts[0]);
+      final minute = int.tryParse(timeParts[1]);
+      if (hour == null || minute == null) continue;
+
+      final scheduleMinutes = hour * 60 + minute;
+      if (scheduleMinutes >= nowMinutes) {
+        // At least one scheduled time has NOT passed yet
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Checks all pending medicines and marks them as 'missed' if their
+  /// schedule time has already passed. Updates the medicine status and
+  /// adds a history entry with status 'missed'.
+  Future<void> _checkAndMarkMissed(List<MedicineModel> medicines) async {
+    for (final med in medicines) {
+      if (med.status == 'pending' && _allTimesHavePassed(med.scheduleTime)) {
+        // 1. Update medicine status to 'missed'
+        final updatedMed = med.copyWith(status: 'missed');
+        await _medicineRepo.updateMedicine(updatedMed);
+
+        // 2. Add record to history table with 'missed' status
+        final history = HistoryModel(
+          id: '${DateTime.now().millisecondsSinceEpoch}_${med.id}',
+          medicineName: med.medicineName,
+          takenAt: DateTime.now(),
+          status: 'missed',
+        );
+        await _historyRepo.addHistory(history);
+      }
+    }
+  }
+
   /// Refreshes lists, calculates adherence progress, and determines the next pending medicine.
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
     });
     try {
+      // First pass: detect and mark any overdue pending medicines as missed
+      final rawList = await _medicineRepo.getAllMedicines();
+      await _checkAndMarkMissed(rawList);
+
+      // Re-fetch after possible status changes
       final list = await _medicineRepo.getAllMedicines();
 
       // Sort medicines by schedule time (e.g. "08:00")
       list.sort((a, b) => a.scheduleTime.compareTo(b.scheduleTime));
 
       int takenCount = 0;
+      int missedCount = 0;
       MedicineModel? nextPending;
 
       for (final med in list) {
         if (med.status == 'taken') {
           takenCount++;
+        } else if (med.status == 'missed') {
+          missedCount++;
         } else if (med.status == 'pending' && nextPending == null) {
           nextPending = med;
         }
@@ -402,31 +456,34 @@ class _HomePageState extends State<HomePage> {
 
   /// Card displaying details of the next scheduled pending medicine.
   Widget _buildPendingMedCard(MedicineModel medicine) {
-    // Parse dose components: "value unit • form • relation • frequency"
     final parts = medicine.dose.split(' • ');
+    final isOldFormat = parts.length >= 4;
+
     final dosage = parts.isNotEmpty ? parts[0] : medicine.dose;
-    final form = parts.length > 1 ? parts[1] : '';
-    final relation = parts.length > 2 ? parts[2] : '';
+    final form = isOldFormat ? parts[1] : '';
+    final relation = isOldFormat ? parts[2] : (parts.length > 1 ? parts[1] : '');
 
     IconData icon = Icons.medication_rounded;
-    if (form.toLowerCase().contains('kapsul')) {
+    final checkText = (form.isNotEmpty ? form : dosage).toLowerCase();
+    if (checkText.contains('kapsul')) {
       icon = Icons.healing_rounded;
-    } else if (form.toLowerCase().contains('sirup')) {
+    } else if (checkText.contains('sirup') || checkText.contains('sendok') || checkText.contains('ml')) {
       icon = Icons.vaccines_rounded;
     }
 
-    final doseInfo =
-        '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}${relation.isNotEmpty ? ' • $relation' : ''}';
+    final doseInfo = isOldFormat
+        ? '$dosage${form.isNotEmpty ? ' • 1 $form' : ''}${relation.isNotEmpty ? ' • $relation' : ''}'
+        : '$dosage${relation.isNotEmpty ? ' • $relation' : ''}';
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.medicalBlue,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: AppColors.medicalBlue.withAlpha(60),
-            blurRadius: 16.0,
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
