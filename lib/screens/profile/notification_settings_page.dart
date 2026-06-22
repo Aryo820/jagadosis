@@ -156,7 +156,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                 ),
                 trailing: Switch.adaptive(
                   value: _globalEnabled,
-                  activeColor: AppColors.wellnessGreen,
+                  activeThumbColor: AppColors.wellnessGreen,
                   onChanged: _updateGlobal,
                 ),
               ),
@@ -218,7 +218,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                             ),
                             trailing: Switch.adaptive(
                               value: _soundEnabled,
-                              activeColor: AppColors.wellnessGreen,
+                              activeThumbColor: AppColors.wellnessGreen,
                               onChanged: _updateSound,
                             ),
                           ),
@@ -245,7 +245,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                             ),
                             trailing: Switch.adaptive(
                               value: _vibrationEnabled,
-                              activeColor: AppColors.wellnessGreen,
+                              activeThumbColor: AppColors.wellnessGreen,
                               onChanged: _updateVibration,
                             ),
                           ),

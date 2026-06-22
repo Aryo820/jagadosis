@@ -199,7 +199,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
                     const SizedBox(height: 16.0),
                     // Jenis Kelamin
                     DropdownButtonFormField<String>(
-                      value: _selectedGender.isEmpty ? null : _selectedGender,
+                      initialValue: _selectedGender.isEmpty ? null : _selectedGender,
                       dropdownColor: AppColors.surfaceWhite,
                       style: GoogleFonts.inter(color: AppColors.textDark, fontSize: 14),
                       decoration: _buildInputDecoration(
@@ -249,7 +249,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
                   children: [
                     // Golongan Darah
                     DropdownButtonFormField<String>(
-                      value: _selectedBloodType.isEmpty ? null : _selectedBloodType,
+                      initialValue: _selectedBloodType.isEmpty ? null : _selectedBloodType,
                       dropdownColor: AppColors.surfaceWhite,
                       style: GoogleFonts.inter(color: AppColors.textDark, fontSize: 14),
                       decoration: _buildInputDecoration(

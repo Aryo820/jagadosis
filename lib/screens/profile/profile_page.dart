@@ -3,15 +3,15 @@ import 'dart:io';
 import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/screens/auth/login_page.dart';
 import 'package:aplikasi/screens/profile/data_diri_page.dart';
-import 'package:aplikasi/screens/profile/notification_settings_page.dart';
 import 'package:aplikasi/screens/profile/emergency_contacts_page.dart';
 import 'package:aplikasi/screens/profile/help_center_page.dart';
+import 'package:aplikasi/screens/profile/notification_settings_page.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -44,7 +44,8 @@ class _ProfilePageState extends State<ProfilePage> {
   /// so it survives gallery deletions or cache clears.
   Future<File> _saveImagePermanently(File image) async {
     final directory = await getApplicationDocumentsDirectory();
-    final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}${p.extension(image.path)}';
+    final fileName =
+        'profile_${DateTime.now().millisecondsSinceEpoch}${p.extension(image.path)}';
     final savedImage = await image.copy('${directory.path}/$fileName');
     return savedImage;
   }
@@ -94,10 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Gagal memilih foto: $e',
-              style: GoogleFonts.inter(),
-            ),
+            content: Text('Gagal memilih foto: $e', style: GoogleFonts.inter()),
             backgroundColor: const Color(0xFFEB5757),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -243,10 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           content: Text(
             'Foto profil kamu akan dihapus dan kembali ke ikon default.',
-            style: GoogleFonts.inter(
-              color: AppColors.textGrey,
-              fontSize: 14,
-            ),
+            style: GoogleFonts.inter(color: AppColors.textGrey, fontSize: 14),
           ),
           actions: [
             TextButton(
@@ -336,7 +331,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: color.withAlpha(120), size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: color.withAlpha(120),
+                size: 20,
+              ),
             ],
           ),
         ),
@@ -428,11 +427,196 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: AppColors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 2.0),
+                  const SizedBox(height: 4.0),
+                  Text(
+                    PreferenceHandler.userEmail,
+                    style: GoogleFonts.inter(
+                      fontSize: 14.0,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                  if (PreferenceHandler.userGender.isNotEmpty ||
+                      PreferenceHandler.userBloodType.isNotEmpty) ...[
+                    const SizedBox(height: 12.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (PreferenceHandler.userGender.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.medicalBlue.withAlpha(20),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.wc_rounded,
+                                  size: 14,
+                                  color: AppColors.medicalBlue,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  PreferenceHandler.userGender,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.medicalBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (PreferenceHandler.userGender.isNotEmpty &&
+                            PreferenceHandler.userBloodType.isNotEmpty)
+                          const SizedBox(width: 8),
+                        if (PreferenceHandler.userBloodType.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEB5757).withAlpha(20),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.bloodtype_outlined,
+                                  size: 14,
+                                  color: Color(0xFFEB5757),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Gol. Darah: ${PreferenceHandler.userBloodType}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFEB5757),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
-            const SizedBox(height: 28.0),
+            const SizedBox(height: 24.0),
+
+            // Medical Info Card
+            if (PreferenceHandler.userBloodType.isNotEmpty ||
+                PreferenceHandler.userBirthDate.isNotEmpty ||
+                PreferenceHandler.userAllergies.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(16.0),
+                  border: Border.all(
+                    color: AppColors.outlineVariant.withAlpha(50),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(5),
+                      blurRadius: 8.0,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ringkasan Medis',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMedicalDetailItem(
+                            'Golongan Darah',
+                            PreferenceHandler.userBloodType.isNotEmpty
+                                ? PreferenceHandler.userBloodType
+                                : '-',
+                            Icons.bloodtype_outlined,
+                            const Color(0xFFEB5757),
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 40,
+                          color: AppColors.outlineVariant.withAlpha(80),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildMedicalDetailItem(
+                            'Tanggal Lahir',
+                            PreferenceHandler.userBirthDate.isNotEmpty
+                                ? PreferenceHandler.userBirthDate
+                                : '-',
+                            Icons.calendar_month_outlined,
+                            AppColors.medicalBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (PreferenceHandler.userAllergies.isNotEmpty) ...[
+                      const SizedBox(height: 12.0),
+                      const Divider(height: 1, color: Color(0xFFF1F3F9)),
+                      const SizedBox(height: 12.0),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            size: 18,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Alergi / Kondisi Medis',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.0,
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                                const SizedBox(height: 2.0),
+                                Text(
+                                  PreferenceHandler.userAllergies,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13.0,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16.0),
 
             // Settings Options List
             _buildSettingCard(
@@ -459,7 +643,9 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const NotificationSettingsPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationSettingsPage(),
+                  ),
                 );
               },
             ),
@@ -472,7 +658,9 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EmergencyContactsPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const EmergencyContactsPage(),
+                  ),
                 );
               },
             ),
@@ -485,7 +673,9 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HelpCenterPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const HelpCenterPage(),
+                  ),
                 );
               },
             ),
@@ -606,6 +796,50 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMedicalDetailItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withAlpha(20),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 16),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 10.0,
+                  color: AppColors.textGrey,
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.inter(
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

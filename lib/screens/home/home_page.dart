@@ -101,14 +101,11 @@ class _HomePageState extends State<HomePage> {
       list.sort((a, b) => a.scheduleTime.compareTo(b.scheduleTime));
 
       int takenCount = 0;
-      int missedCount = 0;
       MedicineModel? nextPending;
 
       for (final med in list) {
         if (med.status == 'taken') {
           takenCount++;
-        } else if (med.status == 'missed') {
-          missedCount++;
         } else if (med.status == 'pending' && nextPending == null) {
           nextPending = med;
         }
