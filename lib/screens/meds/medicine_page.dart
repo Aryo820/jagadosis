@@ -1,7 +1,7 @@
 import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/medicine_repository.dart';
-import 'package:aplikasi/screens/meds/add_medicine_page.dart';
-import 'package:aplikasi/screens/meds/update_medicine_page.dart';
+import 'package:aplikasi/screens/meds/medicine_form_page.dart';
+import 'package:aplikasi/services/notification_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -42,8 +42,10 @@ class _MedsPageState extends State<MedsPage> {
     }
   }
 
-  /// Deletes a medicine by ID and reloads the list.
+  /// Deletes a medicine by ID, cancels its notifications, and reloads the list.
   Future<void> _deleteMedicine(String id) async {
+    // Cancel scheduled notifications before removing from DB
+    await NotificationService().cancelForMedicine(id);
     await _medicineRepo.deleteMedicine(id);
     _loadMedicines();
   }
@@ -157,7 +159,7 @@ class _MedsPageState extends State<MedsPage> {
         onPressed: () async {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddMedicinePage()),
+            MaterialPageRoute(builder: (context) => const MedicineFormPage()),
           );
           if (result == true) {
             _loadMedicines();
@@ -403,7 +405,7 @@ class _MedsPageState extends State<MedsPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        UpdateMedicinePage(medicine: medicine),
+                                        MedicineFormPage(medicine: medicine),
                                   ),
                                 );
                                 if (result == true) {

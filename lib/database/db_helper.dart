@@ -105,6 +105,13 @@ class DatabaseService {
         )
       ''');
     }
+    if (oldVersion < 3) {
+      // Add the enableNotification column for existing installs upgrading to v3.
+      await db.execute(
+        'ALTER TABLE $tableMedicines ADD COLUMN '
+        '$columnEnableNotification INTEGER NOT NULL DEFAULT 1',
+      );
+    }
   }
 
   // Register
