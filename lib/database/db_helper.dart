@@ -20,7 +20,7 @@ class DatabaseService {
 
   // Database name and version constants
   static const String _dbName = 'jagadosis.db';
-  static const int _dbVersion = 3;
+  static const int _dbVersion = 4;
 
   // Table names constants
   static const String tableMedicines = 'medicines';
@@ -35,6 +35,7 @@ class DatabaseService {
   static const String columnDose = 'dose';
   static const String columnScheduleTime = 'scheduleTime';
   static const String columnEnableNotification = 'enableNotification';
+  static const String columnCreatedAt = 'createdAt';
 
   // Histories table column constants
   static const String columnTakenAt = 'takenAt';
@@ -69,7 +70,8 @@ class DatabaseService {
         $columnDose TEXT NOT NULL,
         $columnScheduleTime TEXT NOT NULL,
         $columnStatus TEXT NOT NULL,
-        $columnEnableNotification INTEGER NOT NULL DEFAULT 1
+        $columnEnableNotification INTEGER NOT NULL DEFAULT 1,
+        $columnCreatedAt TEXT NOT NULL DEFAULT '1970-01-01T00:00:00.000'
       )
     ''');
 
@@ -110,6 +112,15 @@ class DatabaseService {
       await db.execute(
         'ALTER TABLE $tableMedicines ADD COLUMN '
         '$columnEnableNotification INTEGER NOT NULL DEFAULT 1',
+      );
+    }
+    if (oldVersion < 4) {
+      // Add the createdAt column for existing installs upgrading to v4.
+      // Existing medicines default to the epoch so they keep their normal
+      // 'missed' behaviour (treated as created long ago).
+      await db.execute(
+        "ALTER TABLE $tableMedicines ADD COLUMN "
+        "$columnCreatedAt TEXT NOT NULL DEFAULT '1970-01-01T00:00:00.000'",
       );
     }
   }

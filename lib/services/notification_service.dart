@@ -163,7 +163,7 @@ class NotificationService {
     final medicines = await repo.getAllMedicines();
 
     for (final medicine in medicines) {
-      if (medicine.status == 'pending' && medicine.enableNotification) {
+      if (medicine.hasPendingSlot && medicine.enableNotification) {
         await scheduleForMedicine(medicine);
       }
     }

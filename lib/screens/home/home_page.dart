@@ -7,6 +7,33 @@ import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// A single scheduled dose: one medicine at one of its scheduled times.
+/// A medicine taken twice a day produces two [_DoseSlot]s, each with its own
+/// status so they can be taken/missed independently.
+class _DoseSlot {
+  final MedicineModel medicine;
+  final int timeIndex;
+  final String time; // "HH:mm"
+  final String status;
+
+  _DoseSlot({
+    required this.medicine,
+    required this.timeIndex,
+    required this.time,
+    required this.status,
+  });
+
+  /// Minutes since midnight for this slot's time, or null if unparseable.
+  int? get minutesOfDay {
+    final parts = time.split(':');
+    if (parts.length != 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    return hour * 60 + minute;
+  }
+}
+
 class HomePage extends StatefulWidget {
   final VoidCallback? onAddMedTap;
   final VoidCallback? onHistoryTap;
@@ -29,7 +56,7 @@ class _HomePageState extends State<HomePage> {
 
   List<MedicineModel> _medicines = [];
   bool _isLoading = true;
-  MedicineModel? _nextPendingMedicine;
+  _DoseSlot? _nextPendingSlot;
   int _adherencePercent = 0;
 
   @override
@@ -38,85 +65,114 @@ class _HomePageState extends State<HomePage> {
     _loadData();
   }
 
-  /// Parses a scheduleTime string (e.g. "08:00" or "08:00, 20:00") and
-  /// returns true if ALL times in the schedule have already passed today.
-  bool _allTimesHavePassed(String scheduleTime) {
+  /// Returns true if the dose slot at the given "HH:mm" time should be marked
+  /// as 'missed': its time already passed today AND it was due *after* the
+  /// medicine was created. A medicine added after today's slot time is not
+  /// instantly marked missed — it simply starts from its next occurrence.
+  bool _shouldMarkMissed(String hhmm, DateTime createdAt) {
+    final parts = hhmm.split(':');
+    if (parts.length != 2) return false;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return false;
+
     final now = DateTime.now();
-    final nowMinutes = now.hour * 60 + now.minute;
+    final slotToday = DateTime(now.year, now.month, now.day, hour, minute);
 
-    // scheduleTime can be "08:00" or "08:00, 20:00"
-    final parts = scheduleTime.split(',').map((s) => s.trim()).toList();
-    for (final part in parts) {
-      final timeParts = part.split(':');
-      if (timeParts.length != 2) continue;
-      final hour = int.tryParse(timeParts[0]);
-      final minute = int.tryParse(timeParts[1]);
-      if (hour == null || minute == null) continue;
-
-      final scheduleMinutes = hour * 60 + minute;
-      if (scheduleMinutes >= nowMinutes) {
-        // At least one scheduled time has NOT passed yet
-        return false;
-      }
-    }
-    return true;
+    return slotToday.isBefore(now) && !slotToday.isBefore(createdAt);
   }
 
-  /// Checks all pending medicines and marks them as 'missed' if their
-  /// schedule time has already passed. Updates the medicine status and
-  /// adds a history entry with status 'missed'.
+  /// Flattens medicines into individual dose slots (one per scheduled time).
+  List<_DoseSlot> _buildSlots(List<MedicineModel> medicines) {
+    final slots = <_DoseSlot>[];
+    for (final med in medicines) {
+      final times = med.scheduleTimes;
+      final statuses = med.slotStatuses;
+      for (int i = 0; i < times.length; i++) {
+        slots.add(
+          _DoseSlot(
+            medicine: med,
+            timeIndex: i,
+            time: times[i],
+            status: i < statuses.length ? statuses[i] : 'pending',
+          ),
+        );
+      }
+    }
+    return slots;
+  }
+
+  /// Checks every pending dose slot and marks it as 'missed' if its scheduled
+  /// time has already passed. Each medicine is updated once (preserving the
+  /// status of its other slots) and one history entry is added per missed slot.
   Future<void> _checkAndMarkMissed(List<MedicineModel> medicines) async {
     for (final med in medicines) {
-      if (med.status == 'pending' && _allTimesHavePassed(med.scheduleTime)) {
-        // 1. Update medicine status to 'missed'
-        final updatedMed = med.copyWith(status: 'missed');
-        await _medicineRepo.updateMedicine(updatedMed);
+      final statuses = med.slotStatuses;
+      final times = med.scheduleTimes;
+      bool changed = false;
 
-        // 2. Add record to history table with 'missed' status
-        final history = HistoryModel(
-          id: '${DateTime.now().millisecondsSinceEpoch}_${med.id}',
-          medicineName: med.medicineName,
-          takenAt: DateTime.now(),
-          status: 'missed',
+      for (int i = 0; i < times.length; i++) {
+        if (statuses[i] == 'pending' &&
+            _shouldMarkMissed(times[i], med.createdAt)) {
+          statuses[i] = 'missed';
+          changed = true;
+
+          final history = HistoryModel(
+            id: '${DateTime.now().millisecondsSinceEpoch}_${med.id}_$i',
+            medicineName: med.medicineName,
+            takenAt: DateTime.now(),
+            status: 'missed',
+          );
+          await _historyRepo.addHistory(history);
+        }
+      }
+
+      if (changed) {
+        await _medicineRepo.updateMedicine(
+          med.copyWith(status: MedicineModel.joinStatuses(statuses)),
         );
-        await _historyRepo.addHistory(history);
       }
     }
   }
 
-  /// Refreshes lists, calculates adherence progress, and determines the next pending medicine.
+  /// Refreshes lists, calculates adherence progress, and determines the next
+  /// pending dose slot (earliest still-pending scheduled time).
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
     });
     try {
-      // First pass: detect and mark any overdue pending medicines as missed
+      // First pass: detect and mark any overdue pending dose slots as missed
       final rawList = await _medicineRepo.getAllMedicines();
       await _checkAndMarkMissed(rawList);
 
       // Re-fetch after possible status changes
       final list = await _medicineRepo.getAllMedicines();
 
-      // Sort medicines by schedule time (e.g. "08:00")
-      list.sort((a, b) => a.scheduleTime.compareTo(b.scheduleTime));
+      // Expand into individual dose slots so each scheduled time is tracked.
+      final slots = _buildSlots(list);
 
       int takenCount = 0;
-      MedicineModel? nextPending;
+      _DoseSlot? nextPending;
 
-      for (final med in list) {
-        if (med.status == 'taken') {
+      for (final slot in slots) {
+        if (slot.status == 'taken') {
           takenCount++;
-        } else if (med.status == 'pending' && nextPending == null) {
-          nextPending = med;
+        } else if (slot.status == 'pending') {
+          // Pick the earliest pending slot by time of day.
+          if (nextPending == null ||
+              (slot.minutesOfDay ?? 0) < (nextPending.minutesOfDay ?? 0)) {
+            nextPending = slot;
+          }
         }
       }
 
       setState(() {
         _medicines = list;
-        _nextPendingMedicine = nextPending;
-        _adherencePercent = list.isEmpty
+        _nextPendingSlot = nextPending;
+        _adherencePercent = slots.isEmpty
             ? 100
-            : ((takenCount / list.length) * 100).round();
+            : ((takenCount / slots.length) * 100).round();
         _isLoading = false;
       });
     } catch (e) {
@@ -126,23 +182,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// Marks a medicine as taken, logs it in consumption history, and reloads state.
-  Future<void> _markAsTaken(MedicineModel medicine) async {
-    // 1. Update medicine status to 'taken' in medicines table
-    final updatedMed = MedicineModel(
-      id: medicine.id,
-      medicineName: medicine.medicineName,
-      dose: medicine.dose,
-      scheduleTime: medicine.scheduleTime,
-      status: 'taken',
-    );
+  /// Marks a single dose slot as taken, logs it in consumption history, and
+  /// reloads state. Other scheduled times of the same medicine are untouched.
+  Future<void> _markSlotAsTaken(_DoseSlot slot) async {
+    // 1. Update only this slot's status, preserving the rest.
+    final updatedMed = slot.medicine.copyWithSlotStatus(slot.timeIndex, 'taken');
     await _medicineRepo.updateMedicine(updatedMed);
 
-    // 2. Add record to history table
+    // 2. Add record to history table.
     final now = DateTime.now();
     final history = HistoryModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      medicineName: medicine.medicineName,
+      id: '${now.millisecondsSinceEpoch}_${slot.medicine.id}_${slot.timeIndex}',
+      medicineName: slot.medicine.medicineName,
       takenAt: now,
       status: 'taken',
     );
@@ -154,7 +205,9 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${medicine.medicineName} berhasil diminum!'),
+        content: Text(
+          '${slot.medicine.medicineName} (${slot.time}) berhasil diminum!',
+        ),
         backgroundColor: AppColors.wellnessGreen,
         duration: const Duration(seconds: 2),
       ),
@@ -345,10 +398,10 @@ class _HomePageState extends State<HomePage> {
                 )
               else if (_medicines.isEmpty)
                 _buildNoMedicinesCard()
-              else if (_nextPendingMedicine == null)
+              else if (_nextPendingSlot == null)
                 _buildAllTakenCard()
               else
-                _buildPendingMedCard(_nextPendingMedicine!),
+                _buildPendingMedCard(_nextPendingSlot!),
 
               const SizedBox(height: 24.0),
             ],
@@ -451,8 +504,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Card displaying details of the next scheduled pending medicine.
-  Widget _buildPendingMedCard(MedicineModel medicine) {
+  /// Card displaying details of the next scheduled pending dose slot.
+  Widget _buildPendingMedCard(_DoseSlot slot) {
+    final medicine = slot.medicine;
     final parts = medicine.dose.split(' • ');
     final isOldFormat = parts.length >= 4;
 
@@ -529,7 +583,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(width: 6.0),
                     Text(
-                      medicine.scheduleTime,
+                      slot.time,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16.0,
                         fontWeight: FontWeight.bold,
@@ -543,7 +597,7 @@ class _HomePageState extends State<HomePage> {
                   width: double.infinity,
                   height: 48.0,
                   child: ElevatedButton.icon(
-                    onPressed: () => _markAsTaken(medicine),
+                    onPressed: () => _markSlotAsTaken(slot),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.surfaceWhite,
                       foregroundColor: AppColors.medicalBlue,

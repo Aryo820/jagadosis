@@ -204,13 +204,30 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         '${_dosageValueController.text} $_selectedDosageUnit • $_selectedFoodRelation • $_selectedFrequency';
 
     final existing = widget.medicine;
+
+    // Build a per-slot status string (one token per scheduled time). When
+    // editing, keep the previous slot statuses by position; any newly added
+    // slot defaults to 'pending'. New medicines start fully 'pending'.
+    final int slotCount = sortedTimes.length;
+    final List<String> slotStatuses;
+    if (existing != null) {
+      final prev = existing.slotStatuses;
+      slotStatuses = List.generate(
+        slotCount,
+        (i) => i < prev.length ? prev[i] : 'pending',
+      );
+    } else {
+      slotStatuses = List.filled(slotCount, 'pending');
+    }
+
     final medicine = MedicineModel(
       id: existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       medicineName: _nameController.text.trim(),
       dose: doseDescription,
       scheduleTime: formattedTime,
-      status: existing?.status ?? 'pending',
+      status: MedicineModel.joinStatuses(slotStatuses),
       enableNotification: existing?.enableNotification ?? true,
+      createdAt: existing?.createdAt ?? DateTime.now(),
     );
 
     if (widget.isEditing) {
