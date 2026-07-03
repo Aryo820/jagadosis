@@ -20,7 +20,7 @@ class DatabaseService {
 
   // Database name and version constants
   static const String _dbName = 'jagadosis.db';
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 5;
 
   // Table names constants
   static const String tableMedicines = 'medicines';
@@ -36,6 +36,7 @@ class DatabaseService {
   static const String columnScheduleTime = 'scheduleTime';
   static const String columnEnableNotification = 'enableNotification';
   static const String columnCreatedAt = 'createdAt';
+  static const String columnStatusDate = 'statusDate';
 
   // Histories table column constants
   static const String columnTakenAt = 'takenAt';
@@ -70,6 +71,7 @@ class DatabaseService {
         $columnDose TEXT NOT NULL,
         $columnScheduleTime TEXT NOT NULL,
         $columnStatus TEXT NOT NULL,
+        $columnStatusDate TEXT NOT NULL DEFAULT '1970-01-01',
         $columnEnableNotification INTEGER NOT NULL DEFAULT 1,
         $columnCreatedAt TEXT NOT NULL DEFAULT '1970-01-01T00:00:00.000'
       )
@@ -121,6 +123,12 @@ class DatabaseService {
       await db.execute(
         "ALTER TABLE $tableMedicines ADD COLUMN "
         "$columnCreatedAt TEXT NOT NULL DEFAULT '1970-01-01T00:00:00.000'",
+      );
+    }
+    if (oldVersion < 5) {
+      await db.execute(
+        "ALTER TABLE $tableMedicines ADD COLUMN "
+        "$columnStatusDate TEXT NOT NULL DEFAULT '1970-01-01'",
       );
     }
   }

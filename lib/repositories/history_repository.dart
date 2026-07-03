@@ -1,5 +1,5 @@
-import 'package:aplikasi/models/history_model.dart';
 import 'package:aplikasi/database/db_helper.dart';
+import 'package:aplikasi/models/history_model.dart';
 import 'package:intl/intl.dart';
 
 /// Repository managing consumption history data transactions.
@@ -9,14 +9,11 @@ class HistoryRepository {
 
   /// Constructor allowing dependency injection for easier testing.
   HistoryRepository({DatabaseService? dbService})
-      : _dbService = dbService ?? DatabaseService();
+    : _dbService = dbService ?? DatabaseService();
 
   /// Adds a new medication consumption history entry to the local database.
   Future<void> addHistory(HistoryModel history) async {
-    await _dbService.insert(
-      DatabaseService.tableHistories,
-      history.toMap(),
-    );
+    await _dbService.insert(DatabaseService.tableHistories, history.toMap());
   }
 
   /// Retrieves all consumption history entries from the database, ordered by the consumption date.
@@ -43,13 +40,19 @@ class HistoryRepository {
 
   /// Retrieves history entries filtered by a specific month.
   Future<List<HistoryModel>> getHistoriesByMonth(int year, int month) async {
-    final String startDate = DateFormat('yyyy-MM-dd').format(DateTime(year, month, 1));
-    final String endDate = DateFormat('yyyy-MM-dd').format(
-      DateTime(year, month + 1, 0, 23, 59, 59),
-    );
+    // Ambil tanggal 1 di bulan berikutnya sebagai batas atas (eksklusif)
+    final String startDate = DateFormat(
+      'yyyy-MM-dd',
+    ).format(DateTime(year, month, 1));
+    final String endDate = DateFormat(
+      'yyyy-MM-dd',
+    ).format(DateTime(year, month + 1, 1));
+
     final List<Map<String, dynamic>> maps = await _dbService.query(
       DatabaseService.tableHistories,
-      where: '${DatabaseService.columnTakenAt} BETWEEN ? AND ?',
+      // Gunakan >= dan < agar jam 23:59 di hari terakhir masuk
+      where:
+          '${DatabaseService.columnTakenAt} >= ? AND ${DatabaseService.columnTakenAt} < ?',
       whereArgs: [startDate, endDate],
       orderBy: '${DatabaseService.columnTakenAt} DESC',
     );
@@ -58,13 +61,17 @@ class HistoryRepository {
 
   /// Retrieves history entries filtered by a specific year.
   Future<List<HistoryModel>> getHistoriesByYear(int year) async {
-    final String startDate = DateFormat('yyyy-MM-dd').format(DateTime(year, 1, 1));
-    final String endDate = DateFormat('yyyy-MM-dd').format(
-      DateTime(year, 12, 31, 23, 59, 59),
-    );
+    final String startDate = DateFormat(
+      'yyyy-MM-dd',
+    ).format(DateTime(year, 1, 1));
+    final String endDate = DateFormat(
+      'yyyy-MM-dd',
+    ).format(DateTime(year + 1, 1, 1));
+
     final List<Map<String, dynamic>> maps = await _dbService.query(
       DatabaseService.tableHistories,
-      where: '${DatabaseService.columnTakenAt} BETWEEN ? AND ?',
+      where:
+          '${DatabaseService.columnTakenAt} >= ? AND ${DatabaseService.columnTakenAt} < ?',
       whereArgs: [startDate, endDate],
       orderBy: '${DatabaseService.columnTakenAt} DESC',
     );

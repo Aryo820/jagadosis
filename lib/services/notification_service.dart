@@ -163,7 +163,7 @@ class NotificationService {
     final medicines = await repo.getAllMedicines();
 
     for (final medicine in medicines) {
-      if (medicine.hasPendingSlot && medicine.enableNotification) {
+      if (medicine.enableNotification) {
         await scheduleForMedicine(medicine);
       }
     }
@@ -187,19 +187,23 @@ class NotificationService {
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute, int offsetMinutes) {
     final now = tz.TZDateTime.now(tz.local);
 
-    // Subtract the reminder offset from the scheduled medication time
-    final totalMinutes = hour * 60 + minute - offsetMinutes;
+    int totalMinutes = hour * 60 + minute - offsetMinutes;
+
+    // Normalize ke 0-1439 range (wrap around midnight safely)
+    // Dengan ini, 00:10 - 30 menit = -20 -> +1440 = 1420 (23:40)
+    while (totalMinutes < 0) {
+      totalMinutes += 24 * 60;
+    }
     final adjustedHour = (totalMinutes ~/ 60) % 24;
     final adjustedMinute = totalMinutes % 60;
 
-    // Handle negative minutes (e.g. 00:10 - 30 min = previous day 23:40)
     tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local,
       now.year,
       now.month,
       now.day,
-      adjustedHour < 0 ? adjustedHour + 24 : adjustedHour,
-      adjustedMinute < 0 ? adjustedMinute + 60 : adjustedMinute,
+      adjustedHour,
+      adjustedMinute,
     );
 
     // If the time has already passed today, schedule for tomorrow
