@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "802530338689",
+    "project_id": "jagadosis-cfc6e",
+    "storage_bucket": "jagadosis-cfc6e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:802530338689:android:b4309def5b0e9c65bbaa80",
+        "android_client_info": {
+          "package_name": "com.yoo.jagadosis"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHSh_4p05FmVDKDPtKP8b58q5jEQ0ilvA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
