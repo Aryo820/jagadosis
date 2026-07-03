@@ -9,6 +9,7 @@ class MedicineModel {
   /// "taken, pending" — one token per scheduled time. Legacy rows that store a
   /// single token (e.g. "pending") are still read correctly via [slotStatuses].
   final String status;
+  final String statusDate;
   final bool enableNotification;
 
   /// When this medicine was first added. Used so a dose slot whose time had
@@ -22,6 +23,7 @@ class MedicineModel {
     required this.dose,
     required this.scheduleTime,
     required this.status,
+    required this.statusDate,
     this.enableNotification = true,
     required this.createdAt,
   });
@@ -32,6 +34,13 @@ class MedicineModel {
       .map((s) => s.trim())
       .where((s) => s.isNotEmpty)
       .toList();
+
+  static String dateKey(DateTime date) {
+    return DateTime(date.year, date.month, date.day)
+        .toIso8601String()
+        .split('T')
+        .first;
+  }
 
   /// Status of each scheduled time, parallel to [scheduleTimes].
   ///
@@ -75,13 +84,26 @@ class MedicineModel {
   /// Builds the comma-separated [status] value from a list of slot statuses.
   static String joinStatuses(List<String> statuses) => statuses.join(', ');
 
+  bool get isStatusForToday => statusDate == dateKey(DateTime.now());
+
+  MedicineModel resetDailyStatus({DateTime? date}) {
+    final slotCount = scheduleTimes.isEmpty ? 1 : scheduleTimes.length;
+    return copyWith(
+      status: joinStatuses(List.filled(slotCount, 'pending')),
+      statusDate: dateKey(date ?? DateTime.now()),
+    );
+  }
+
   /// Returns a copy with the status of the slot at [index] changed to
   /// [newStatus], leaving all other slots untouched.
   MedicineModel copyWithSlotStatus(int index, String newStatus) {
     final statuses = slotStatuses;
     if (index < 0 || index >= statuses.length) return this;
     statuses[index] = newStatus;
-    return copyWith(status: joinStatuses(statuses));
+    return copyWith(
+      status: joinStatuses(statuses),
+      statusDate: dateKey(DateTime.now()),
+    );
   }
 
   Map<String, dynamic> toMap() {
@@ -91,6 +113,7 @@ class MedicineModel {
       'dose': dose,
       'scheduleTime': scheduleTime,
       'status': status,
+      'statusDate': statusDate,
       'enableNotification': enableNotification ? 1 : 0,
       'createdAt': createdAt.toIso8601String(),
     };
@@ -103,6 +126,11 @@ class MedicineModel {
       dose: map['dose'] ?? '',
       scheduleTime: map['scheduleTime'] ?? '',
       status: map['status'] ?? 'pending',
+      statusDate:
+          (map['statusDate'] != null &&
+              (map['statusDate'] as String).isNotEmpty)
+          ? map['statusDate']
+          : dateKey(DateTime.fromMillisecondsSinceEpoch(0)),
       enableNotification: (map['enableNotification'] ?? 1) == 1,
       // Legacy rows without a createdAt are treated as created long ago so they
       // keep their normal 'missed' behaviour.
@@ -119,6 +147,7 @@ class MedicineModel {
     String? dose,
     String? scheduleTime,
     String? status,
+    String? statusDate,
     bool? enableNotification,
     DateTime? createdAt,
   }) {
@@ -128,6 +157,7 @@ class MedicineModel {
       dose: dose ?? this.dose,
       scheduleTime: scheduleTime ?? this.scheduleTime,
       status: status ?? this.status,
+      statusDate: statusDate ?? this.statusDate,
       enableNotification: enableNotification ?? this.enableNotification,
       createdAt: createdAt ?? this.createdAt,
     );

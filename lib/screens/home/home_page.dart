@@ -117,10 +117,25 @@ class _HomePageState extends State<HomePage> {
           statuses[i] = 'missed';
           changed = true;
 
+          // Ambil jam dan menit dari jadwal obat
+          final parts = times[i].split(':');
+          final hour = int.tryParse(parts[0]) ?? 0;
+          final minute = int.tryParse(parts[1]) ?? 0;
+
+          final now = DateTime.now();
+          // Buat tanggal dan jam sesuai jadwal obat yang terlewat
+          final scheduleTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            hour,
+            minute,
+          );
+
           final history = HistoryModel(
-            id: '${DateTime.now().millisecondsSinceEpoch}_${med.id}_$i',
+            id: '${now.millisecondsSinceEpoch}_${med.id}_$i',
             medicineName: med.medicineName,
-            takenAt: DateTime.now(),
+            takenAt: scheduleTime, // Gunakan waktu jadwal, bukan DateTime.now()
             status: 'missed',
           );
           await _historyRepo.addHistory(history);
@@ -135,6 +150,69 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<List<MedicineModel>> _rollOverOldStatuses(
+    List<MedicineModel> medicines,
+  ) async {
+    final today = MedicineModel.dateKey(DateTime.now());
+    final todayDate = DateTime.tryParse(today);
+    final updatedMedicines = <MedicineModel>[];
+
+    for (final med in medicines) {
+      if (med.statusDate == today) {
+        updatedMedicines.add(med);
+        continue;
+      }
+
+      final statusDate = DateTime.tryParse(med.statusDate);
+      final shouldBackfillMissedHistory =
+          statusDate != null &&
+          todayDate != null &&
+          statusDate.isBefore(todayDate) &&
+          med.statusDate !=
+              MedicineModel.dateKey(DateTime.fromMillisecondsSinceEpoch(0));
+      final times = med.scheduleTimes;
+      final statuses = med.slotStatuses;
+
+      for (int i = 0; i < times.length; i++) {
+        if (statuses[i] != 'pending' ||
+            !shouldBackfillMissedHistory ||
+            statusDate == null) {
+          continue;
+        }
+
+        final parts = times[i].split(':');
+        if (parts.length != 2) continue;
+
+        final hour = int.tryParse(parts[0]);
+        final minute = int.tryParse(parts[1]);
+        if (hour == null || minute == null) continue;
+
+        final missedAt = DateTime(
+          statusDate.year,
+          statusDate.month,
+          statusDate.day,
+          hour,
+          minute,
+        );
+        if (missedAt.isBefore(med.createdAt)) continue;
+
+        final history = HistoryModel(
+          id: '${missedAt.millisecondsSinceEpoch}_${med.id}_$i',
+          medicineName: med.medicineName,
+          takenAt: missedAt,
+          status: 'missed',
+        );
+        await _historyRepo.addHistory(history);
+      }
+
+      final resetMedicine = med.resetDailyStatus();
+      await _medicineRepo.updateMedicine(resetMedicine);
+      updatedMedicines.add(resetMedicine);
+    }
+
+    return updatedMedicines;
+  }
+
   /// Refreshes lists, calculates adherence progress, and determines the next
   /// pending dose slot (earliest still-pending scheduled time).
   Future<void> _loadData() async {
@@ -144,7 +222,8 @@ class _HomePageState extends State<HomePage> {
     try {
       // First pass: detect and mark any overdue pending dose slots as missed
       final rawList = await _medicineRepo.getAllMedicines();
-      await _checkAndMarkMissed(rawList);
+      final todayList = await _rollOverOldStatuses(rawList);
+      await _checkAndMarkMissed(todayList);
 
       // Re-fetch after possible status changes
       final list = await _medicineRepo.getAllMedicines();
@@ -186,7 +265,10 @@ class _HomePageState extends State<HomePage> {
   /// reloads state. Other scheduled times of the same medicine are untouched.
   Future<void> _markSlotAsTaken(_DoseSlot slot) async {
     // 1. Update only this slot's status, preserving the rest.
-    final updatedMed = slot.medicine.copyWithSlotStatus(slot.timeIndex, 'taken');
+    final updatedMed = slot.medicine.copyWithSlotStatus(
+      slot.timeIndex,
+      'taken',
+    );
     await _medicineRepo.updateMedicine(updatedMed);
 
     // 2. Add record to history table.
@@ -512,13 +594,17 @@ class _HomePageState extends State<HomePage> {
 
     final dosage = parts.isNotEmpty ? parts[0] : medicine.dose;
     final form = isOldFormat ? parts[1] : '';
-    final relation = isOldFormat ? parts[2] : (parts.length > 1 ? parts[1] : '');
+    final relation = isOldFormat
+        ? parts[2]
+        : (parts.length > 1 ? parts[1] : '');
 
     IconData icon = Icons.medication_rounded;
     final checkText = (form.isNotEmpty ? form : dosage).toLowerCase();
     if (checkText.contains('kapsul')) {
       icon = Icons.healing_rounded;
-    } else if (checkText.contains('sirup') || checkText.contains('sendok') || checkText.contains('ml')) {
+    } else if (checkText.contains('sirup') ||
+        checkText.contains('sendok') ||
+        checkText.contains('ml')) {
       icon = Icons.vaccines_rounded;
     }
 
