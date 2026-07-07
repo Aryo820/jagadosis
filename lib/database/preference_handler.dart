@@ -97,8 +97,18 @@ class PreferenceHandler {
     await _prefs.remove(_keyIsLogin);
     await _prefs.remove(_keyUserName);
     await _prefs.remove(_keyUserEmail);
-    // Optional: clear health-related preferences or keep them. We keep them or clear them.
-    // Let's keep them so if they relogin, it's personal to the device, or we can clear them.
-    // Standard logout clears login credentials only. Let's keep it consistent.
+
+    // Clear per-user PII too. These cache one account's medical profile and
+    // photo; leaving them behind would leak the previous user's data into the
+    // next account that signs in on a shared device. The durable copies live in
+    // Firestore and are pulled back into the cache on the next login.
+    await _prefs.remove(_keyProfilePhoto);
+    await _prefs.remove(_keyUserBirthDate);
+    await _prefs.remove(_keyUserGender);
+    await _prefs.remove(_keyUserBloodType);
+    await _prefs.remove(_keyUserAllergies);
+
+    // Notification settings (global/sound/vibration/snooze) are device-level
+    // preferences, not per-user data, so they intentionally persist.
   }
 }

@@ -1,4 +1,6 @@
+import 'package:aplikasi/services/auth_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,11 +14,83 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  /// Sends a Firebase password-reset email to the entered address.
+  Future<void> _sendResetEmail() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await _authService.sendPasswordResetEmail(_emailController.text.trim());
+      if (!mounted) return;
+      _showSuccessSnackBar();
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AuthService.messageFromException(e)),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSuccessSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.textDark,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        content: Row(
+          children: [
+            Container(
+              width: 32.0,
+              height: 32.0,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check, color: Colors.white, size: 18.0),
+            ),
+            const SizedBox(width: 12.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Email Terkirim!',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    'Cek kotak masuk email Anda sekarang.',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.0,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -189,64 +263,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               width: double.infinity,
                               height: 52.0,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    // Action to send email
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        backgroundColor: AppColors.textDark,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16.0,
-                                          ),
-                                        ),
-                                        content: Row(
-                                          children: [
-                                            Container(
-                                              width: 32.0,
-                                              height: 32.0,
-                                              decoration: const BoxDecoration(
-                                                color: Colors.green,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.check,
-                                                color: Colors.white,
-                                                size: 18.0,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12.0),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    'Email Terkirim!',
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    'Cek kotak masuk email Anda sekarang.',
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 12.0,
-                                                      color: Colors.white70,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
+                                onPressed: _isLoading ? null : _sendResetEmail,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.medicalBlue,
                                   foregroundColor: AppColors.surfaceWhite,
@@ -258,20 +275,36 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                     vertical: 14.0,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Kirim',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16.0,
-                                        fontWeight: FontWeight.w600,
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 22.0,
+                                        height: 22.0,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                AppColors.surfaceWhite,
+                                              ),
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Kirim',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 16.0,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8.0),
+                                          const Icon(
+                                            Icons.send_rounded,
+                                            size: 16.0,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 8.0),
-                                    const Icon(Icons.send_rounded, size: 16.0),
-                                  ],
-                                ),
                               ),
                             ),
                           ],

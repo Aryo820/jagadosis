@@ -1,7 +1,9 @@
 import 'dart:developer';
 
+import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/medicine_repository.dart';
+import 'package:aplikasi/services/alarm_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -18,14 +20,35 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
+  /// The jam-H ringing alarm is delegated here. NotificationService stays the
+  /// single façade every call site uses, so wiring the alarm in at each choke
+  /// point keeps all schedule/cancel/reschedule flows in sync automatically.
+  final AlarmService _alarmService = AlarmService();
+
   /// Android notification channel details
-  static const String _channelId = 'jagadosis_reminders';
+  ///
+  /// [_channelIdBase] is only a prefix: the actual channel id encodes the
+  /// sound/vibration preference (see [_channelIdFor]). On Android 8+ a channel's
+  /// alert behaviour is fixed at creation, so using one channel per combination
+  /// is the reliable way to make the sound/vibration toggles take effect when
+  /// they change — a plain per-notification flag would be ignored.
+  static const String _channelIdBase = 'jagadosis_reminders';
   static const String _channelName = 'Pengingat Obat';
   static const String _channelDescription =
       'Notifikasi pengingat untuk minum obat tepat waktu';
 
+  /// Channel id for a given alert configuration.
+  String _channelIdFor(bool sound, bool vibration) =>
+      '${_channelIdBase}_s${sound ? 1 : 0}_v${vibration ? 1 : 0}';
+
   /// Reminder offsets in minutes before scheduled medication time
   static const List<int> _reminderOffsets = [30, 15];
+
+  /// Maximum number of schedule times supported per medicine. Bounds both the
+  /// notification-id encoding and the cancel sweep, so reducing a medicine's
+  /// frequency (e.g. 4x → 2x) still clears its previously scheduled reminders.
+  /// The UI currently allows up to 4; the headroom keeps ids stable if it grows.
+  static const int _maxScheduleTimes = 8;
 
   /// Initializes the notification plugin, timezone data, and Android channel.
   /// Must be called once before any scheduling, typically in main().
@@ -54,13 +77,30 @@ class NotificationService {
       await androidPlugin.requestNotificationsPermission();
       await androidPlugin.requestExactAlarmsPermission();
     }
+
+    // Initialize the ringing-alarm subsystem alongside notifications.
+    await _alarmService.init();
   }
 
   /// Schedules reminder notifications for a single medicine.
   /// Creates 2 notifications per schedule time (30 min and 15 min before).
   /// Only schedules if [medicine.enableNotification] is true.
   Future<void> scheduleForMedicine(MedicineModel medicine) async {
+    // Also arm the jam-H ringing alarm. AlarmService applies the same
+    // per-medicine and global gates internally.
+    await _alarmService.scheduleForMedicine(medicine);
+
+    // Honour both the per-medicine switch and the global reminder toggle. This
+    // is the single choke point for scheduling, so gating here also covers
+    // rescheduleAll() and the add/edit-medicine flow.
     if (!medicine.enableNotification) return;
+    if (!PreferenceHandler.notificationGlobal) return;
+
+    // Resolve the alert preferences once; they select the channel and are also
+    // set on the notification so both agree.
+    final bool soundOn = PreferenceHandler.notificationSound;
+    final bool vibrationOn = PreferenceHandler.notificationVibration;
+    final String channelId = _channelIdFor(soundOn, vibrationOn);
 
     final timeStrings = medicine.scheduleTime
         .split(',')
@@ -110,14 +150,17 @@ class NotificationService {
             scheduledDate: scheduledDate,
             notificationDetails: NotificationDetails(
               android: AndroidNotificationDetails(
-                _channelId,
+                channelId,
                 _channelName,
                 channelDescription: _channelDescription,
                 importance: Importance.high,
                 priority: Priority.high,
                 icon: '@mipmap/ic_launcher',
-                enableVibration: true,
-                playSound: true,
+                // Kept consistent with the channel picked above; the settings
+                // page reschedules when these change so a different channel
+                // (with the new behaviour) is used for upcoming reminders.
+                enableVibration: vibrationOn,
+                playSound: soundOn,
               ),
             ),
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -137,8 +180,13 @@ class NotificationService {
 
   /// Cancels all scheduled notifications for a given medicine ID.
   Future<void> cancelForMedicine(String medicineId) async {
-    // Cancel for up to 4 schedule times × 2 offsets = 8 notifications max
-    for (int timeIndex = 0; timeIndex < 4; timeIndex++) {
+    // Clear the medicine's ringing alarms too.
+    await _alarmService.cancelForMedicine(medicineId);
+
+    // Sweep every possible slot (max supported times × offsets). Using the full
+    // range — rather than the medicine's *current* time count — ensures a
+    // medicine edited down to fewer times still has its old reminders cleared.
+    for (int timeIndex = 0; timeIndex < _maxScheduleTimes; timeIndex++) {
       for (
         int offsetIndex = 0;
         offsetIndex < _reminderOffsets.length;
@@ -153,32 +201,62 @@ class NotificationService {
     );
   }
 
+  /// Cancels every scheduled notification on the device.
+  ///
+  /// Called on sign-out so one user's reminders never linger for the next
+  /// account signing in on a shared device.
+  Future<void> cancelAll() async {
+    await _alarmService.cancelAll();
+    await _plugin.cancelAll();
+    log('NotificationService: Cancelled all notifications');
+  }
+
   /// Reschedules notifications for all medicines in the database.
   /// Cancels all existing notifications first, then re-creates them.
   /// Should be called on app startup.
   Future<void> rescheduleAll() async {
     await _plugin.cancelAll();
+    // Clear stale ringing alarms; the loop below re-arms them per medicine via
+    // scheduleForMedicine (which delegates to AlarmService).
+    await _alarmService.cancelAll();
 
-    final repo = MedicineRepository();
-    final medicines = await repo.getAllMedicines();
+    // Never let a data-layer failure propagate: this runs at app startup and
+    // right after login, where an unhandled throw would break launch or the
+    // sign-in flow. A failed fetch simply means no reminders this pass.
+    try {
+      final repo = MedicineRepository();
+      final medicines = await repo.getAllMedicines();
 
-    for (final medicine in medicines) {
-      if (medicine.enableNotification) {
+      for (final medicine in medicines) {
+        // scheduleForMedicine itself gates on the per-medicine and global
+        // toggles, so no need to re-check enableNotification here.
         await scheduleForMedicine(medicine);
       }
-    }
 
-    log(
-      'NotificationService: Rescheduled notifications for ${medicines.length} medicines',
-    );
+      log(
+        'NotificationService: Rescheduled notifications for '
+        '${medicines.length} medicines',
+      );
+    } catch (e) {
+      log('NotificationService: rescheduleAll failed: $e');
+    }
   }
 
   /// Generates a unique notification ID based on medicine ID, time index,
   /// and offset index. Uses hashCode to convert string ID to int.
   int _generateId(String medicineId, int timeIndex, int offsetIndex) {
-    // Ensure positive and within 32-bit int range
-    final base = medicineId.hashCode.abs() % 100000;
-    return base * 10 + timeIndex * 2 + offsetIndex;
+    // Reserve `slotSpace` consecutive ids per medicine — one for every
+    // (time × offset) combination — so a medicine's own reminders never clash.
+    final int slotSpace = _maxScheduleTimes * _reminderOffsets.length;
+    final int slotIndex = timeIndex * _reminderOffsets.length + offsetIndex;
+
+    // Hash the medicine id into a base, spreading medicines across the full
+    // positive 32-bit range Android notification ids allow. This widens the
+    // id space ~1300x vs. the old %100000, making cross-medicine collisions
+    // (which would silently overwrite another medicine's reminders) negligible.
+    // base * slotSpace + slotIndex stays <= 2^31-1 by construction.
+    final int base = medicineId.hashCode.abs() % (0x7FFFFFFF ~/ slotSpace);
+    return base * slotSpace + slotIndex;
   }
 
   /// Calculates the next TZDateTime instance for [hour]:[minute] minus

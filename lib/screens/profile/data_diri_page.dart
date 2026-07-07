@@ -1,4 +1,6 @@
 import 'package:aplikasi/database/preference_handler.dart';
+import 'package:aplikasi/models/user_profile_model.dart';
+import 'package:aplikasi/services/profile_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +19,9 @@ class _DataDiriPageState extends State<DataDiriPage> {
   late TextEditingController _birthDateController;
   late TextEditingController _allergiesController;
   
+  final ProfileService _profileService = ProfileService();
+  bool _isSaving = false;
+
   String _selectedGender = '';
   String _selectedBloodType = '';
 
@@ -76,32 +81,55 @@ class _DataDiriPageState extends State<DataDiriPage> {
   }
 
   Future<void> _saveData() async {
-    if (_formKey.currentState!.validate()) {
-      // Save name back to preference user details
-      await PreferenceHandler.saveUser(_nameController.text, PreferenceHandler.userEmail);
-      
-      // Save other medical details
-      await PreferenceHandler.saveBirthDate(_birthDateController.text);
-      await PreferenceHandler.saveGender(_selectedGender);
-      await PreferenceHandler.saveBloodType(_selectedBloodType);
-      await PreferenceHandler.saveAllergies(_allergiesController.text);
+    if (!_formKey.currentState!.validate()) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Data diri berhasil diperbarui',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-            ),
-            backgroundColor: AppColors.wellnessGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+    setState(() => _isSaving = true);
+
+    // Persist to Firestore (durable, cross-device) and the local cache in one
+    // call. Email stays read-only, so it's carried over unchanged.
+    final profile = UserProfile(
+      name: _nameController.text.trim(),
+      email: PreferenceHandler.userEmail,
+      birthDate: _birthDateController.text,
+      gender: _selectedGender,
+      bloodType: _selectedBloodType,
+      allergies: _allergiesController.text,
+    );
+
+    try {
+      await _profileService.saveProfile(profile);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Data diri berhasil diperbarui',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
           ),
-        );
-        Navigator.pop(context, true); // Return true to indicate profile page should rebuild name
-      }
+          backgroundColor: AppColors.wellnessGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      Navigator.pop(context, true); // Return true so profile page rebuilds name
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal menyimpan. Periksa koneksi dan coba lagi.',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -289,7 +317,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
                 width: double.infinity,
                 height: 52.0,
                 child: ElevatedButton(
-                  onPressed: _saveData,
+                  onPressed: _isSaving ? null : _saveData,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.medicalBlue,
                     foregroundColor: AppColors.surfaceWhite,
@@ -298,13 +326,24 @@ class _DataDiriPageState extends State<DataDiriPage> {
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                   ),
-                  child: Text(
-                    'Simpan Perubahan',
-                    style: GoogleFonts.inter(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 22.0,
+                          height: 22.0,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.surfaceWhite,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          'Simpan Perubahan',
+                          style: GoogleFonts.inter(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 24.0),

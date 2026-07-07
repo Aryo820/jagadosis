@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:aplikasi/database/preference_handler.dart';
-import 'package:aplikasi/screens/auth/login_page.dart';
-import 'package:aplikasi/screens/dashboard_page.dart';
+import 'package:aplikasi/screens/auth/auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,8 +16,6 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _logoFadeAnimation;
-  late Animation<double> _textFadeAnimation;
-  late Animation<Offset> _textSlideAnimation;
   late Animation<double> _taglineFadeAnimation;
   Timer? _timer;
 
@@ -48,23 +44,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // App title text fade
-    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
-      ),
-    );
-
-    // App title slide up slightly
-    _textSlideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.4, 0.8, curve: Curves.easeOutBack),
-          ),
-        );
-
     // Tagline fade
     _taglineFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -82,13 +61,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateToHome() {
     if (!mounted) return;
-    final Widget destination = PreferenceHandler.isLogin
-        ? const DashboardPage()
-        : const LoginPage();
-
+    // Hand off routing to AuthGate, which decides between Dashboard and Login
+    // from the live Firebase Auth session rather than a local login flag.
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => destination,
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const AuthGate(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

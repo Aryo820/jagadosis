@@ -3,6 +3,7 @@ import 'package:aplikasi/models/history_model.dart';
 import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/history_repository.dart';
 import 'package:aplikasi/repositories/medicine_repository.dart';
+import 'package:aplikasi/services/medicine_events.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -63,6 +64,19 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadData();
+    // Reload when a dose is confirmed elsewhere (e.g. the alarm ring screen) so
+    // the schedule updates without needing a bottom-nav tab switch.
+    medicineDataRevision.addListener(_onMedicineDataChanged);
+  }
+
+  @override
+  void dispose() {
+    medicineDataRevision.removeListener(_onMedicineDataChanged);
+    super.dispose();
+  }
+
+  void _onMedicineDataChanged() {
+    if (mounted) _loadData();
   }
 
   /// Returns true if the dose slot at the given "HH:mm" time should be marked
@@ -173,10 +187,12 @@ class _HomePageState extends State<HomePage> {
       final times = med.scheduleTimes;
       final statuses = med.slotStatuses;
 
+      // Non-null only when a backfill is warranted; the null-check below both
+      // skips non-backfill cases and promotes the date for use as DateTime.
+      final backfillDate = shouldBackfillMissedHistory ? statusDate : null;
+
       for (int i = 0; i < times.length; i++) {
-        if (statuses[i] != 'pending' ||
-            !shouldBackfillMissedHistory ||
-            statusDate == null) {
+        if (statuses[i] != 'pending' || backfillDate == null) {
           continue;
         }
 
@@ -188,9 +204,9 @@ class _HomePageState extends State<HomePage> {
         if (hour == null || minute == null) continue;
 
         final missedAt = DateTime(
-          statusDate.year,
-          statusDate.month,
-          statusDate.day,
+          backfillDate.year,
+          backfillDate.month,
+          backfillDate.day,
           hour,
           minute,
         );
@@ -232,11 +248,14 @@ class _HomePageState extends State<HomePage> {
       final slots = _buildSlots(list);
 
       int takenCount = 0;
+      int missedCount = 0;
       _DoseSlot? nextPending;
 
       for (final slot in slots) {
         if (slot.status == 'taken') {
           takenCount++;
+        } else if (slot.status == 'missed') {
+          missedCount++;
         } else if (slot.status == 'pending') {
           // Pick the earliest pending slot by time of day.
           if (nextPending == null ||
@@ -246,12 +265,18 @@ class _HomePageState extends State<HomePage> {
         }
       }
 
+      // Adherence only considers doses that are already *due* today (taken or
+      // missed). Slots whose scheduled time hasn't arrived yet are excluded so
+      // the percentage isn't dragged down by doses the user can't have taken
+      // yet. When nothing is due yet, adherence is a clean 100%.
+      final int dueCount = takenCount + missedCount;
+
       setState(() {
         _medicines = list;
         _nextPendingSlot = nextPending;
-        _adherencePercent = slots.isEmpty
+        _adherencePercent = dueCount == 0
             ? 100
-            : ((takenCount / slots.length) * 100).round();
+            : ((takenCount / dueCount) * 100).round();
         _isLoading = false;
       });
     } catch (e) {
@@ -405,7 +430,7 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 2.0),
                           Text(
                             _adherencePercent == 100
-                                ? 'Luar biasa, semua obat diminum!'
+                                ? 'Kepatuhan Anda sempurna hari ini!'
                                 : 'Bagus, mari minum obat tepat waktu!',
                             style: GoogleFonts.inter(
                               fontSize: 12.0,

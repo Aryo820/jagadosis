@@ -1,6 +1,7 @@
-import 'package:aplikasi/database/db_helper.dart';
-import 'package:aplikasi/models/user_model.dart';
+import 'package:aplikasi/services/auth_service.dart';
+import 'package:aplikasi/services/profile_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,38 +18,51 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   void register() async {
-    if (_formKey.currentState!.validate()) {
-      // Create user model
-      final user = UserModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final name = _nameController.text.trim();
+      final email = _emailController.text.trim();
+      await _authService.register(
+        name: name,
+        email: email,
         password: _passwordController.text,
       );
 
-      final dbService = DatabaseService();
-      final success = await dbService.registerUser(user);
+      // Seed the Firestore profile document while still authenticated (the
+      // security rules require the write to come from the account itself).
+      await _profileService.createInitial(name: name, email: email);
+
+      // Firebase signs the new account in automatically. Sign back out so the
+      // app state stays consistent with the "please log in" UX below (and so
+      // AuthGate doesn't jump straight to the dashboard on the next launch).
+      await _authService.signOut();
 
       if (!mounted) return;
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pendaftaran berhasil! Silakan masuk.'),
-            backgroundColor: AppColors.wellnessGreen,
-          ),
-        );
-        Navigator.pop(context); // Go back to login page
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pendaftaran gagal. Email mungkin sudah terdaftar.'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pendaftaran berhasil! Silakan masuk.'),
+          backgroundColor: AppColors.wellnessGreen,
+        ),
+      );
+      Navigator.pop(context); // Go back to login page
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AuthService.messageFromException(e)),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -366,7 +380,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               width: double.infinity,
                               height: 52.0,
                               child: ElevatedButton(
-                                onPressed: register,
+                                onPressed: _isLoading ? null : register,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.medicalBlue,
                                   foregroundColor: AppColors.surfaceWhite,
@@ -378,20 +392,36 @@ class _RegisterPageState extends State<RegisterPage> {
                                     vertical: 14.0,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Daftar',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16.0,
-                                        fontWeight: FontWeight.w600,
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 22.0,
+                                        height: 22.0,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                AppColors.surfaceWhite,
+                                              ),
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Daftar',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 16.0,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8.0),
+                                          const Icon(
+                                            Icons.arrow_forward,
+                                            size: 18.0,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 8.0),
-                                    const Icon(Icons.arrow_forward, size: 18.0),
-                                  ],
-                                ),
                               ),
                             ),
                             const SizedBox(height: 16.0),

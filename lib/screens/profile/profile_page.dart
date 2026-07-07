@@ -6,6 +6,8 @@ import 'package:aplikasi/screens/profile/data_diri_page.dart';
 import 'package:aplikasi/screens/profile/emergency_contacts_page.dart';
 import 'package:aplikasi/screens/profile/help_center_page.dart';
 import 'package:aplikasi/screens/profile/notification_settings_page.dart';
+import 'package:aplikasi/services/auth_service.dart';
+import 'package:aplikasi/services/notification_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -687,6 +689,11 @@ class _ProfilePageState extends State<ProfilePage> {
               height: 52.0,
               child: ElevatedButton.icon(
                 onPressed: () async {
+                  // Clear this device's reminders so they don't leak to the
+                  // next account signing in here; medicines stay safe in
+                  // Firestore and reschedule on the next login.
+                  await NotificationService().cancelAll();
+                  await AuthService().signOut();
                   await PreferenceHandler.logOut();
                   if (context.mounted) {
                     Navigator.pushAndRemoveUntil(

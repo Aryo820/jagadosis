@@ -1,10 +1,14 @@
-import 'package:aplikasi/database/db_helper.dart';
+import 'dart:async';
+
 import 'package:aplikasi/database/preference_handler.dart';
-import 'package:aplikasi/extensions/navigator.dart';
 import 'package:aplikasi/screens/auth/forgot_password_page.dart';
 import 'package:aplikasi/screens/auth/register_page.dart';
 import 'package:aplikasi/screens/dashboard_page.dart';
+import 'package:aplikasi/services/auth_service.dart';
+import 'package:aplikasi/services/notification_service.dart';
+import 'package:aplikasi/services/profile_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -19,44 +23,56 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
   bool _obscurePassword = true;
-  @override
-  void initState() {
-    super.initState();
-    _checkLoginStatus();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    if (PreferenceHandler.isLogin) {
-      if (!mounted) return;
-      context.pushAndRemoveAll(const DashboardPage());
-    }
-  }
+  bool _isLoading = false;
 
   void login() async {
-    if (_formKey.currentState!.validate()) {
-      final String email = _emailController.text.trim();
-      final String password = _passwordController.text;
+    if (!_formKey.currentState!.validate()) return;
 
-      final dbService = DatabaseService();
-      final user = await dbService.loginUser(email, password);
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text;
+
+    setState(() => _isLoading = true);
+    try {
+      final user = await _authService.login(email: email, password: password);
+
+      // Prefer the display name set at registration; fall back to the email
+      // local-part so the greeting never shows an empty name.
+      final displayName = user.displayName?.trim();
+      final name = (displayName != null && displayName.isNotEmpty)
+          ? displayName
+          : email.split('@').first;
+      await PreferenceHandler.saveUser(name, user.email ?? email);
+
+      // Refresh the local cache from Firestore (name + medical details entered
+      // on another device). Best-effort: a sync hiccup must not block login —
+      // the baseline saved above still stands.
+      try {
+        await _profileService.pullIntoCache();
+      } catch (_) {}
+
+      // Reschedule reminders for this device from the user's Firestore
+      // medicines (e.g. first login on a new phone). Fire-and-forget so it
+      // doesn't delay reaching the dashboard.
+      unawaited(NotificationService().rescheduleAll());
 
       if (!mounted) return;
-      if (user != null) {
-        await PreferenceHandler.saveUser(user.name, user.email);
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email atau Kata Sandi salah'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardPage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AuthService.messageFromException(e)),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -343,7 +359,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: double.infinity,
                               height: 52.0,
                               child: ElevatedButton(
-                                onPressed: login,
+                                onPressed: _isLoading ? null : login,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.medicalBlue,
                                   foregroundColor: AppColors.surfaceWhite,
@@ -355,13 +371,25 @@ class _LoginPageState extends State<LoginPage> {
                                     vertical: 14.0,
                                   ),
                                 ),
-                                child: Text(
-                                  'Masuk',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16.0,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 22.0,
+                                        height: 22.0,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                AppColors.surfaceWhite,
+                                              ),
+                                        ),
+                                      )
+                                    : Text(
+                                        'Masuk',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 12.0),

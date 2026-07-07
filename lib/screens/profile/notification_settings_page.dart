@@ -1,4 +1,5 @@
 import 'package:aplikasi/database/preference_handler.dart';
+import 'package:aplikasi/services/notification_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +18,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   late int _snoozeMinutes;
 
   final List<int> _snoozeOptions = [5, 10, 15, 30, 60];
+  final NotificationService _notificationService = NotificationService();
 
   @override
   void initState() {
@@ -28,10 +30,18 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   }
 
   Future<void> _updateGlobal(bool value) async {
+    // Persist first so scheduling reads the new value, then apply it: turning
+    // reminders off clears everything scheduled; turning them back on rebuilds
+    // the schedule from the user's medicines.
     await PreferenceHandler.setNotificationGlobal(value);
     setState(() {
       _globalEnabled = value;
     });
+    if (value) {
+      await _notificationService.rescheduleAll();
+    } else {
+      await _notificationService.cancelAll();
+    }
   }
 
   Future<void> _updateSound(bool value) async {
@@ -39,6 +49,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     setState(() {
       _soundEnabled = value;
     });
+    // Sound/vibration are baked into notifications at schedule time, so rebuild
+    // the schedule for the change to take effect on upcoming reminders.
+    await _reapplyIfEnabled();
   }
 
   Future<void> _updateVibration(bool value) async {
@@ -46,6 +59,15 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     setState(() {
       _vibrationEnabled = value;
     });
+    await _reapplyIfEnabled();
+  }
+
+  /// Reschedules to bake in changed alert preferences, but only while global
+  /// reminders are on (otherwise there's nothing scheduled to update).
+  Future<void> _reapplyIfEnabled() async {
+    if (_globalEnabled) {
+      await _notificationService.rescheduleAll();
+    }
   }
 
   Future<void> _updateSnooze(int? value) async {

@@ -29,10 +29,22 @@ class HistoryModel {
     return HistoryModel(
       id: map['id'] ?? '',
       medicineName: map['medicineName'] ?? '',
-      takenAt: map['takenAt'] != null
-          ? DateTime.parse(map['takenAt'])
-          : DateTime.now(), // Fallback ke waktu sekarang jika null
+      // A record with no/invalid takenAt is corrupt; its real time is unknown.
+      // Fall back to the Unix epoch (a clear sentinel) rather than DateTime.now(),
+      // which would silently stamp the record with the read time and misplace it
+      // as "just taken" in history and adherence stats.
+      takenAt: _parseTakenAt(map['takenAt']),
       status: map['status'] ?? '',
     );
+  }
+
+  /// Parses an ISO-8601 `takenAt`, tolerating null or malformed values by
+  /// returning the Unix epoch as an explicit "unknown time" sentinel.
+  static DateTime _parseTakenAt(dynamic raw) {
+    if (raw is String && raw.isNotEmpty) {
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null) return parsed;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 }
