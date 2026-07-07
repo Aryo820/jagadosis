@@ -79,9 +79,11 @@ class _HistoryPageState extends State<HistoryPage>
           break;
       }
 
-      final allLogs = await _historyRepo.getAllHistories();
-      final takenCount = allLogs.where((log) => log.status == 'taken').length;
-      final totalCount = allLogs.length;
+      // Adherence must reflect the period currently in view (the logs just
+      // fetched for this day/month/year), not an all-time total — otherwise the
+      // percentage wouldn't match the entries shown right below it.
+      final takenCount = logs.where((log) => log.status == 'taken').length;
+      final totalCount = logs.length;
 
       setState(() {
         _histories = logs;
@@ -103,8 +105,12 @@ class _HistoryPageState extends State<HistoryPage>
 
   /// Helpers for dynamic dates
   List<DateTime> _getWeekDays() {
-    final now = DateTime.now();
-    final monday = now.subtract(Duration(days: now.weekday - 1));
+    // Anchor the week on the selected date, not "today": navigating from the
+    // monthly view to a past date must show that date's week in the strip, in
+    // sync with the logs loaded for it.
+    final monday = _selectedDate.subtract(
+      Duration(days: _selectedDate.weekday - 1),
+    );
     return List.generate(7, (index) => monday.add(Duration(days: index)));
   }
 

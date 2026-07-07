@@ -212,11 +212,21 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     final int slotCount = sortedTimes.length;
     final List<String> slotStatuses;
     if (existing != null && existing.statusDate == today) {
-      final prev = existing.slotStatuses;
-      slotStatuses = List.generate(
-        slotCount,
-        (i) => i < prev.length ? prev[i] : 'pending',
-      );
+      // Preserve prior slot statuses by matching the time-of-day, not the list
+      // position. The user may have changed a time this session (which re-sorts
+      // the slots), and a position-based copy would attach e.g. a 'taken' mark
+      // to the wrong dose. A brand-new time falls back to 'pending'.
+      final prevTimes = existing.scheduleTimes;
+      final prevStatuses = existing.slotStatuses;
+      final statusByTime = <String, String>{
+        for (int i = 0; i < prevTimes.length && i < prevStatuses.length; i++)
+          prevTimes[i]: prevStatuses[i],
+      };
+      slotStatuses = sortedTimes.map((t) {
+        final label =
+            '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+        return statusByTime[label] ?? 'pending';
+      }).toList();
     } else {
       slotStatuses = List.filled(slotCount, 'pending');
     }
