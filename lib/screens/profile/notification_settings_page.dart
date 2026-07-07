@@ -348,36 +348,40 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.purple.withAlpha(20),
-                                  shape: BoxShape.circle,
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple.withAlpha(20),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.snooze_rounded, color: Colors.purple),
                                 ),
-                                child: const Icon(Icons.snooze_rounded, color: Colors.purple),
-                              ),
-                              const SizedBox(width: 16),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Jeda Pengingat',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textDark,
-                                      fontSize: 15,
-                                    ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Jeda Pengingat',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textDark,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Ulangi alarm jika belum diminum',
+                                        style: GoogleFonts.inter(color: AppColors.textGrey, fontSize: 12),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    'Ulangi alarm jika belum diminum',
-                                    style: GoogleFonts.inter(color: AppColors.textGrey, fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
                           ),
                           DropdownButton<int>(
                             value: _snoozeMinutes,
