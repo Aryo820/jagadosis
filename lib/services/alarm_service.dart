@@ -1,9 +1,12 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:alarm/alarm.dart';
 import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/medicine_repository.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 /// Singleton managing the *ringing* medication alarm that fires exactly at the
 /// scheduled dose time (jam H), on top of the 30/15-minute heads-up reminders
@@ -21,8 +24,11 @@ class AlarmService {
   factory AlarmService() => _instance;
   AlarmService._internal();
 
-  /// Bundled looping alarm sound.
-  static const String _alarmSound = 'assets/audio/ggmu.mp3';
+  /// Subdirectory (relative to the app Documents dir) where ringtones picked
+  /// from device storage are copied. The alarm plugin accepts this same
+  /// Documents-relative path, so it doubles as the stored [PreferenceHandler]
+  /// value for user-picked sounds.
+  static const String customSoundDir = 'alarm_sounds';
 
   /// Mirrors NotificationService: bounds the id encoding and the cancel sweep so
   /// reducing a medicine's frequency still clears its old alarms.
@@ -87,7 +93,9 @@ class AlarmService {
     return AlarmSettings(
       id: id,
       dateTime: when,
-      assetAudioPath: _alarmSound,
+      // A bundled asset (`assets/...`) or a Documents-relative custom sound
+      // (`alarm_sounds/...`); the alarm plugin accepts either form directly.
+      assetAudioPath: PreferenceHandler.alarmSound,
       loopAudio: true,
       vibrate: vibrationOn,
       // Sound off → keep it silent (vibrate-only), otherwise fade up to full.
@@ -209,5 +217,33 @@ class AlarmService {
       log('AlarmService: resolveSlot failed for id=$alarmId: $e');
     }
     return null;
+  }
+
+  /// True when [soundPath] is a bundled Flutter asset rather than a user-picked
+  /// file living under the app Documents directory.
+  static bool isAssetSound(String soundPath) => soundPath.startsWith('assets/');
+
+  /// Resolves a stored ringtone value to an absolute file path for preview
+  /// playback. Bundled assets return null (they're played via AssetSource, not
+  /// a file path); custom sounds return their absolute location under Documents.
+  static Future<String?> resolveAbsolutePath(String soundPath) async {
+    if (isAssetSound(soundPath)) return null;
+    final dir = await getApplicationDocumentsDirectory();
+    return p.join(dir.path, soundPath);
+  }
+
+  /// Copies a picked audio file into the app Documents directory and returns the
+  /// Documents-relative path (e.g. `alarm_sounds/song.mp3`) to store in
+  /// preferences and hand to the alarm plugin. Keeps the original file name.
+  static Future<String> importCustomSound(String sourcePath) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final destDir = Directory(p.join(dir.path, customSoundDir));
+    if (!await destDir.exists()) {
+      await destDir.create(recursive: true);
+    }
+    final fileName = p.basename(sourcePath);
+    final destPath = p.join(destDir.path, fileName);
+    await File(sourcePath).copy(destPath);
+    return p.join(customSoundDir, fileName);
   }
 }

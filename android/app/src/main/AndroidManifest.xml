@@ -11,6 +11,12 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <!-- Read a user-picked audio file so it can be used as the alarm ringtone.
+         READ_MEDIA_AUDIO covers Android 13+; READ_EXTERNAL_STORAGE covers 32 and
+         below (capped so newer OSes don't demand the broad legacy permission). -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
 
     <application
         android:label="JagaDosis"

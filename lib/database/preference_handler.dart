@@ -22,6 +22,15 @@ class PreferenceHandler {
   static const _keyNotificationSound = "notificationSound";
   static const _keyNotificationVibration = "notificationVibration";
   static const _keyNotificationSnooze = "notificationSnooze";
+  // Alarm ringtone: [_keyAlarmSound] holds the value passed to the alarm plugin
+  // (a bundled `assets/...` path or an app-Documents-relative `alarm_sounds/...`
+  // path), while [_keyAlarmSoundName] is the label shown in the UI.
+  static const _keyAlarmSound = "alarmSound";
+  static const _keyAlarmSoundName = "alarmSoundName";
+
+  /// Default bundled ringtone, used when the user hasn't picked another sound.
+  static const String defaultAlarmSound = "assets/audio/ggmu.mp3";
+  static const String defaultAlarmSoundName = "Bawaan (GGMU)";
 
   // Emergency Contacts Keys
   static const _keyEmergencyContacts = "emergencyContacts";
@@ -88,6 +97,16 @@ class PreferenceHandler {
 
   static Future<void> setNotificationSnooze(int minutes) async => await _prefs.setInt(_keyNotificationSnooze, minutes);
   static int get notificationSnooze => _prefs.getInt(_keyNotificationSnooze) ?? 10; // Default 10 minutes
+
+  /// Persists both the alarm ringtone path and its display label together, so
+  /// the scheduler and the UI never fall out of sync.
+  static Future<void> setAlarmSound(String path, String name) async {
+    await _prefs.setString(_keyAlarmSound, path);
+    await _prefs.setString(_keyAlarmSoundName, name);
+  }
+
+  static String get alarmSound => _prefs.getString(_keyAlarmSound) ?? defaultAlarmSound;
+  static String get alarmSoundName => _prefs.getString(_keyAlarmSoundName) ?? defaultAlarmSoundName;
 
   // --- EMERGENCY CONTACTS HELPERS ---
   static Future<void> saveEmergencyContacts(String jsonString) async => await _prefs.setString(_keyEmergencyContacts, jsonString);

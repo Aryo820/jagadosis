@@ -1,4 +1,5 @@
 import 'package:aplikasi/database/preference_handler.dart';
+import 'package:aplikasi/screens/profile/alarm_sound_page.dart';
 import 'package:aplikasi/services/notification_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   late bool _soundEnabled;
   late bool _vibrationEnabled;
   late int _snoozeMinutes;
+  late String _alarmSoundName;
 
   final List<int> _snoozeOptions = [5, 10, 15, 30, 60];
   final NotificationService _notificationService = NotificationService();
@@ -27,6 +29,19 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     _soundEnabled = PreferenceHandler.notificationSound;
     _vibrationEnabled = PreferenceHandler.notificationVibration;
     _snoozeMinutes = PreferenceHandler.notificationSnooze;
+    _alarmSoundName = PreferenceHandler.alarmSoundName;
+  }
+
+  /// Opens the ringtone picker, then refreshes the shown name. The picker saves
+  /// the choice and reschedules alarms itself, so we only re-read the label.
+  Future<void> _openSoundPicker() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AlarmSoundPage()),
+    );
+    setState(() {
+      _alarmSoundName = PreferenceHandler.alarmSoundName;
+    });
   }
 
   Future<void> _updateGlobal(bool value) async {
@@ -270,6 +285,36 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                               activeThumbColor: AppColors.wellnessGreen,
                               onChanged: _updateVibration,
                             ),
+                          ),
+                          const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF1F3F9)),
+                          // Ringtone picker
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                            onTap: _openSoundPicker,
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.medicalBlue.withAlpha(20),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.music_note_rounded, color: AppColors.medicalBlue),
+                            ),
+                            title: Text(
+                              'Nada Dering',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textDark,
+                                fontSize: 15,
+                              ),
+                            ),
+                            subtitle: Text(
+                              _alarmSoundName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(color: AppColors.textGrey, fontSize: 12),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
                           ),
                         ],
                       ),
