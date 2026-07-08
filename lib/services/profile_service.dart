@@ -20,11 +20,29 @@ class ProfileService {
   /// Seeds the Firestore document right after registration (while the new
   /// account is still authenticated). Only name/email are known at this point;
   /// the merge write leaves room for medical details added later.
+  ///
+  /// When [consentVersion]/[termsVersion] are provided, the accepted
+  /// privacy-policy and terms versions plus an acceptance timestamp are
+  /// recorded alongside the profile, giving a durable audit trail of what the
+  /// user agreed to at sign-up.
   Future<void> createInitial({
     required String name,
     required String email,
+    String consentVersion = '',
+    String termsVersion = '',
   }) {
-    return _repo.save(UserProfile(name: name, email: email));
+    final hasConsent = consentVersion.isNotEmpty || termsVersion.isNotEmpty;
+    return _repo.save(
+      UserProfile(
+        name: name,
+        email: email,
+        consentVersion: consentVersion,
+        termsVersion: termsVersion,
+        consentAcceptedAt: hasConsent
+            ? DateTime.now().toUtc().toIso8601String()
+            : '',
+      ),
+    );
   }
 
   /// Pulls the remote profile into the local cache after login so the greeting,

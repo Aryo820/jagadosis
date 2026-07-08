@@ -3,8 +3,10 @@ import 'package:aplikasi/models/history_model.dart';
 import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/history_repository.dart';
 import 'package:aplikasi/repositories/medicine_repository.dart';
+import 'package:aplikasi/services/auth_service.dart';
 import 'package:aplikasi/services/medicine_events.dart';
 import 'package:aplikasi/utils/app_colors.dart';
+import 'package:aplikasi/utils/email_verification_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -54,16 +56,19 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final MedicineRepository _medicineRepo = MedicineRepository();
   final HistoryRepository _historyRepo = HistoryRepository();
+  final AuthService _authService = AuthService();
 
   List<MedicineModel> _medicines = [];
   bool _isLoading = true;
   _DoseSlot? _nextPendingSlot;
   int _adherencePercent = 0;
+  bool _emailVerified = true;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _refreshVerificationStatus();
     // Reload when a dose is confirmed elsewhere (e.g. the alarm ring screen) so
     // the schedule updates without needing a bottom-nav tab switch.
     medicineDataRevision.addListener(_onMedicineDataChanged);
@@ -77,6 +82,16 @@ class _HomePageState extends State<HomePage> {
 
   void _onMedicineDataChanged() {
     if (mounted) _loadData();
+  }
+
+  /// Refreshes the account's verification status from the server so the banner
+  /// disappears on the next home visit once the user has clicked the link.
+  Future<void> _refreshVerificationStatus() async {
+    try {
+      await _authService.reloadCurrentUser();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() => _emailVerified = _authService.isEmailVerified);
   }
 
   /// Returns true if the dose slot at the given "HH:mm" time should be marked
@@ -366,7 +381,10 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundBlue,
       body: RefreshIndicator(
-        onRefresh: _loadData,
+        onRefresh: () async {
+          await _loadData();
+          await _refreshVerificationStatus();
+        },
         color: AppColors.medicalBlue,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -394,6 +412,12 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 20.0),
+
+              // Email verification banner — only while the account is unverified.
+              if (!_emailVerified) ...[
+                _buildVerificationBanner(),
+                const SizedBox(height: 20.0),
+              ],
 
               // Adherence Progress Section
               Container(
@@ -514,6 +538,123 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Warning banner shown on the home screen while the account's email is not
+  /// yet verified. Explains why some features are locked and offers a one-tap
+  /// resend plus a way to re-check status after verifying in the browser.
+  Widget _buildVerificationBanner() {
+    const amber = Color(0xFF934700);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: amber.withAlpha(20),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: amber.withAlpha(60)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.mark_email_unread_outlined,
+                color: amber,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Email belum diverifikasi',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6.0),
+          Text(
+            'Verifikasi email Anda untuk membuka fitur tambah/ubah obat dan '
+            'melengkapi data diri. Cek kotak masuk & folder spam.',
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              height: 1.4,
+              color: AppColors.textGrey,
+            ),
+          ),
+          const SizedBox(height: 12.0),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () =>
+                      EmailVerificationGuard.resendVerificationEmail(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: amber,
+                    side: const BorderSide(color: amber),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  child: Text(
+                    'Kirim Ulang',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.0,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10.0),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await _refreshVerificationStatus();
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          _emailVerified
+                              ? 'Email terverifikasi. Semua fitur terbuka!'
+                              : 'Belum terverifikasi. Klik link di email Anda dulu.',
+                          style: GoogleFonts.inter(),
+                        ),
+                        backgroundColor: _emailVerified
+                            ? AppColors.wellnessGreen
+                            : Colors.redAccent,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: amber,
+                    foregroundColor: AppColors.surfaceWhite,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  child: Text(
+                    'Saya Sudah Verifikasi',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

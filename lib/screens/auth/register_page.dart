@@ -1,7 +1,11 @@
+import 'package:aplikasi/extensions/navigator.dart';
+import 'package:aplikasi/screens/legal/privacy_policy_page.dart';
+import 'package:aplikasi/screens/legal/terms_and_conditions_page.dart';
 import 'package:aplikasi/services/auth_service.dart';
 import 'package:aplikasi/services/profile_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -22,6 +26,16 @@ class _RegisterPageState extends State<RegisterPage> {
   final ProfileService _profileService = ProfileService();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _agreedToPolicy = false;
+
+  // Held as fields (not created inline in build) so they can be disposed and
+  // aren't rebuilt on every setState.
+  late final TapGestureRecognizer _policyTapRecognizer =
+      TapGestureRecognizer()
+        ..onTap = () => context.push(const PrivacyPolicyPage());
+  late final TapGestureRecognizer _termsTapRecognizer =
+      TapGestureRecognizer()
+        ..onTap = () => context.push(const TermsAndConditionsPage());
 
   void register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -38,7 +52,14 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // Seed the Firestore profile document while still authenticated (the
       // security rules require the write to come from the account itself).
-      await _profileService.createInitial(name: name, email: email);
+      // The register button is gated on _agreedToPolicy, so recording the
+      // accepted policy version here captures a truthful consent trail.
+      await _profileService.createInitial(
+        name: name,
+        email: email,
+        consentVersion: privacyPolicyVersion,
+        termsVersion: termsVersion,
+      );
 
       // Firebase signs the new account in automatically. Sign back out so the
       // app state stays consistent with the "please log in" UX below (and so
@@ -48,8 +69,12 @@ class _RegisterPageState extends State<RegisterPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pendaftaran berhasil! Silakan masuk.'),
+          content: Text(
+            'Pendaftaran berhasil! Kami telah mengirim link verifikasi ke '
+            'email Anda. Silakan cek kotak masuk (dan folder spam), lalu masuk.',
+          ),
           backgroundColor: AppColors.wellnessGreen,
+          duration: Duration(seconds: 6),
         ),
       );
       Navigator.pop(context); // Go back to login page
@@ -72,6 +97,8 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _policyTapRecognizer.dispose();
+    _termsTapRecognizer.dispose();
     super.dispose();
   }
 
@@ -373,6 +400,70 @@ class _RegisterPageState extends State<RegisterPage> {
                               },
                             ),
 
+                            const SizedBox(height: 16.0),
+
+                            // Privacy policy consent
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 24.0,
+                                  height: 24.0,
+                                  child: Checkbox(
+                                    value: _agreedToPolicy,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _agreedToPolicy = value ?? false;
+                                      });
+                                    },
+                                    activeColor: AppColors.medicalBlue,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10.0),
+                                Expanded(
+                                  child: Text.rich(
+                                    TextSpan(
+                                      text: 'Saya menyetujui ',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13.0,
+                                        color: AppColors.textGrey,
+                                        height: 1.4,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Syarat & Ketentuan',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13.0,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.medicalBlue,
+                                            height: 1.4,
+                                          ),
+                                          recognizer: _termsTapRecognizer,
+                                        ),
+                                        const TextSpan(text: ' dan '),
+                                        TextSpan(
+                                          text: 'Kebijakan Privasi',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13.0,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.medicalBlue,
+                                            height: 1.4,
+                                          ),
+                                          recognizer: _policyTapRecognizer,
+                                        ),
+                                        const TextSpan(text: '.'),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
                             const SizedBox(height: 24.0),
 
                             // Register Button
@@ -380,7 +471,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               width: double.infinity,
                               height: 52.0,
                               child: ElevatedButton(
-                                onPressed: _isLoading ? null : register,
+                                onPressed: (_isLoading || !_agreedToPolicy)
+                                    ? null
+                                    : register,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.medicalBlue,
                                   foregroundColor: AppColors.surfaceWhite,

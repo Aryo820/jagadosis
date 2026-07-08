@@ -143,8 +143,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
 
   /// Medicine name for the card; falls back to the notification title's payload.
   String get _medicineName =>
-      _medicine?.medicineName ??
-      (_resolved ? 'Obat Anda' : '');
+      _medicine?.medicineName ?? (_resolved ? 'Obat Anda' : '');
 
   /// Subtitle under the name: dosage + meal relation when available.
   String get _doseSubtitle {
@@ -469,10 +468,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
           Text(
             "Menekan 'Sudah Minum' akan mencatat riwayat hari ini.",
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.textGrey,
-            ),
+            style: GoogleFonts.inter(fontSize: 12, color: AppColors.textGrey),
           ),
         ],
       ),
@@ -514,10 +510,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
             Text(
               'Data Anda telah diperbarui. Tetap sehat bersama JagaDosis!',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                color: AppColors.textGrey,
-              ),
+              style: GoogleFonts.inter(fontSize: 15, color: AppColors.textGrey),
             ),
             const SizedBox(height: 40),
             SizedBox(

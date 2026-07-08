@@ -9,6 +9,7 @@ import 'package:aplikasi/screens/profile/notification_settings_page.dart';
 import 'package:aplikasi/services/auth_service.dart';
 import 'package:aplikasi/services/notification_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
+import 'package:aplikasi/utils/email_verification_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -359,7 +360,15 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 children: [
                   GestureDetector(
-                    onTap: _showPhotoOptions,
+                    onTap: () async {
+                      if (!await EmailVerificationGuard.ensureVerified(
+                        context,
+                      )) {
+                        return;
+                      }
+                      if (!mounted) return;
+                      _showPhotoOptions();
+                    },
                     child: Stack(
                       children: [
                         Container(
@@ -627,6 +636,10 @@ class _ProfilePageState extends State<ProfilePage> {
               Icons.person_outline_rounded,
               AppColors.medicalBlue,
               onTap: () async {
+                if (!await EmailVerificationGuard.ensureVerified(context)) {
+                  return;
+                }
+                if (!context.mounted) return;
                 final updated = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const DataDiriPage()),
@@ -688,23 +701,7 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               height: 52.0,
               child: ElevatedButton.icon(
-                onPressed: () async {
-                  // Clear this device's reminders so they don't leak to the
-                  // next account signing in here; medicines stay safe in
-                  // Firestore and reschedule on the next login.
-                  await NotificationService().cancelAll();
-                  await AuthService().signOut();
-                  await PreferenceHandler.logOut();
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
-                      (route) => false,
-                    );
-                  }
-                },
+                onPressed: _confirmLogout,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEB5757),
                   foregroundColor: AppColors.surfaceWhite,
@@ -728,6 +725,57 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
+  }
+
+  /// Asks the user to confirm before logging out — a mis-tap on the Keluar
+  /// button would otherwise force a full re-login. Only proceeds when the user
+  /// explicitly confirms.
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Keluar dari Akun'),
+          content: const Text(
+            'Apakah Anda yakin ingin keluar? Anda perlu masuk kembali untuk '
+            'menggunakan aplikasi.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                'Keluar',
+                style: TextStyle(color: Color(0xFFEB5757)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true) {
+      await _performLogout();
+    }
+  }
+
+  /// Signs the user out and returns to the login screen. Clears this device's
+  /// reminders so they don't leak to the next account signing in here;
+  /// medicines stay safe in Firestore and reschedule on the next login.
+  Future<void> _performLogout() async {
+    await NotificationService().cancelAll();
+    await AuthService().signOut();
+    await PreferenceHandler.logOut();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
+    }
   }
 
   Widget _buildSettingCard(

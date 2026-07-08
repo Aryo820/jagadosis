@@ -3,6 +3,7 @@ import 'package:aplikasi/repositories/medicine_repository.dart';
 import 'package:aplikasi/screens/meds/medicine_form_page.dart';
 import 'package:aplikasi/services/notification_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
+import 'package:aplikasi/utils/email_verification_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -157,6 +158,8 @@ class _MedsPageState extends State<MedsPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          if (!await EmailVerificationGuard.ensureVerified(context)) return;
+          if (!context.mounted) return;
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const MedicineFormPage()),
@@ -401,6 +404,12 @@ class _MedsPageState extends State<MedsPage> {
                               ),
                               onTap: () async {
                                 Navigator.pop(context);
+                                if (!await EmailVerificationGuard.ensureVerified(
+                                  context,
+                                )) {
+                                  return;
+                                }
+                                if (!context.mounted) return;
                                 final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(

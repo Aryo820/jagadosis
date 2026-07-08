@@ -14,7 +14,9 @@ class AuthService {
   /// The currently signed-in user, or null when signed out.
   User? get currentUser => _auth.currentUser;
 
-  /// Registers a new account and stores [name] as its display name.
+  /// Registers a new account, stores [name] as its display name and sends a
+  /// verification email to [email] so the address can be proven to belong to
+  /// the user.
   /// Throws [FirebaseAuthException] on failure (e.g. email already in use).
   Future<User> register({
     required String name,
@@ -27,9 +29,26 @@ class AuthService {
     );
     final user = credential.user!;
     await user.updateDisplayName(name);
+    // Fire off the verification email while the new account is still signed in
+    // (sendEmailVerification requires an authenticated user).
+    await user.sendEmailVerification();
     await user.reload();
     return _auth.currentUser ?? user;
   }
+
+  /// Whether the signed-in user has confirmed their email address.
+  /// False when signed out.
+  bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
+
+  /// Re-sends the verification email to the current user.
+  /// Throws [FirebaseAuthException] on failure (e.g. too many requests).
+  Future<void> sendEmailVerification() async {
+    await _auth.currentUser?.sendEmailVerification();
+  }
+
+  /// Refreshes the current user from the server so [isEmailVerified] reflects a
+  /// verification the user just completed in their browser.
+  Future<void> reloadCurrentUser() => _auth.currentUser?.reload() ?? Future.value();
 
   /// Signs in with [email] and [password].
   /// Throws [FirebaseAuthException] on failure (e.g. wrong password).

@@ -52,7 +52,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     '2x Sehari',
     '3x Sehari',
     '4x Sehari',
-    'Sesuai Kebutuhan',
   ];
   final List<String> _foodRelations = [
     'Sebelum Makan',
@@ -195,9 +194,11 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         return aMinutes.compareTo(bMinutes);
       });
 
-    final String formattedTime = sortedTimes.map((t) {
-      return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-    }).join(', ');
+    final String formattedTime = sortedTimes
+        .map((t) {
+          return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+        })
+        .join(', ');
 
     // Combine dose, unit, relation and frequency for comprehensive UI display.
     final String doseDescription =
@@ -258,8 +259,9 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
 
   /// Shows the success bottom sheet, with copy adapted to add/edit mode.
   void _showSuccessSheet() {
-    final String title =
-        widget.isEditing ? 'Obat Berhasil Diperbarui' : 'Obat Berhasil Disimpan';
+    final String title = widget.isEditing
+        ? 'Obat Berhasil Diperbarui'
+        : 'Obat Berhasil Disimpan';
     final String message = widget.isEditing
         ? '${_nameController.text} (${_dosageValueController.text} $_selectedDosageUnit) telah diperbarui.'
         : '${_nameController.text} (${_dosageValueController.text} $_selectedDosageUnit) telah ditambahkan ke daftar obat Anda.';
@@ -322,7 +324,10 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context); // Close bottom sheet
-                    Navigator.pop(context, true); // Back to list with reload flag
+                    Navigator.pop(
+                      context,
+                      true,
+                    ); // Back to list with reload flag
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _selectedColor,

@@ -2,20 +2,57 @@ rules_version = '2';
 
 // Security rules for JagaDosis (project: jagadosis-cfc6e).
 //
-// Principle: every document under `users/{uid}` is private to the account whose
-// uid matches the document id. A signed-in user can read and write only their
-// own profile; no one can touch another user's data, and signed-out requests
-// are rejected outright.
+// Two layers of protection, enforced server-side so they hold even for requests
+// that bypass the Flutter app (scripts, REST API, a cloned client):
+//
+//   1. Ownership — every document under `users/{uid}` is private to the account
+//      whose uid matches the document id. Signed-out requests are rejected.
+//   2. Email verification — data-populating writes (medicines, history, and
+//      edits to the profile's medical details) require a verified email, so a
+//      throwaway or misspelled address can never seed real records.
+//
+// The one deliberate exception is CREATING the profile document: registration
+// seeds `users/{uid}` (name + email) while the verification link has only just
+// been sent, so the email isn't verified yet. Blocking that create would break
+// sign-up. Everything the user fills in afterwards is verification-gated.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    // Signed in and acting on their own data.
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
 
-      // Future medicine/history sub-collections inherit the same owner-only
-      // access (Phase 2). Remove if you model those as top-level collections.
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+    // The account's email has been confirmed via the verification link.
+    // Safe to call only after isOwner() (which guarantees request.auth != null);
+    // && short-circuits so token is never read on a signed-out request.
+    function isVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    match /users/{uid} {
+      // Reading your own data never requires verification.
+      allow read: if isOwner(uid);
+
+      // Seeded at registration before the email is verified — must stay open,
+      // otherwise sign-up itself fails.
+      allow create: if isOwner(uid);
+
+      // Editing the profile (Data Diri: birth date, blood type, allergies) is a
+      // data-populating action, so it needs a verified email.
+      allow update, delete: if isOwner(uid) && isVerified();
+
+      // Medicines: pure user-generated content. Reads stay open; writes require
+      // a verified email.
+      match /medicines/{medicineId} {
+        allow read: if isOwner(uid);
+        allow write: if isOwner(uid) && isVerified();
+      }
+
+      // Consumption history: same policy as medicines.
+      match /history/{historyId} {
+        allow read: if isOwner(uid);
+        allow write: if isOwner(uid) && isVerified();
       }
     }
   }
