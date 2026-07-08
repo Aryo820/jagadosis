@@ -6,21 +6,25 @@
 | **Informasi Dokumen** | |
 |---|---|
 | **Nama Produk** | JagaDosis |
-| **Versi Dokumen** | 1.0 |
-| **Versi Aplikasi** | 1.0.0+1 |
-| **Tanggal** | 18 Juni 2026 |
-| **Platform** | Android, iOS, Web, Windows, macOS, Linux (Flutter Multi-platform) |
+| **Versi Dokumen** | 2.0 |
+| **Versi Aplikasi** | 1.0.0+5 |
+| **Tanggal** | 9 Juli 2026 |
+| **Platform** | Android & iOS (Flutter) |
 | **Bahasa Antarmuka** | Bahasa Indonesia |
+| **Backend** | Firebase (Authentication + Cloud Firestore) |
 | **Status** | In Development |
 
 ---
 
 ## 1. Executive Summary
 
-**JagaDosis** adalah aplikasi mobile berbasis Flutter yang dirancang sebagai pendamping pintar untuk membantu pengguna mengelola jadwal minum obat secara teratur dan tepat waktu. Aplikasi ini menyediakan fitur pencatatan obat, pengingat jadwal, pelacakan riwayat konsumsi, serta monitoring tingkat kepatuhan minum obat harian — semuanya dengan antarmuka yang bersih, modern, dan mudah digunakan.
+**JagaDosis** adalah aplikasi mobile berbasis **Flutter** yang dirancang sebagai pendamping pintar untuk membantu pengguna mengelola jadwal minum obat secara teratur dan tepat waktu. Aplikasi ini menyediakan pencatatan obat, **alarm nyata** pada jam minum, pengingat notifikasi 30 & 15 menit sebelum jadwal, pelacakan riwayat konsumsi, serta monitoring tingkat kepatuhan minum obat harian — semuanya dengan antarmuka yang bersih, modern, dan mudah digunakan.
 
 > [!IMPORTANT]
-> Aplikasi ini menggunakan penyimpanan lokal (SQLite) dan tidak memerlukan koneksi internet untuk beroperasi, sehingga cocok digunakan oleh segala kalangan termasuk pengguna di daerah dengan konektivitas terbatas.
+> Data pengguna disimpan di **Cloud Firestore** (per akun, berbasis Firebase Auth UID) dengan **offline persistence** — aplikasi tetap dapat membaca & menulis data saat tanpa koneksi, lalu otomatis tersinkron ketika kembali online. Sesi dan preferensi perangkat disimpan lokal via `SharedPreferences`.
+
+> [!NOTE]
+> Dokumen ini merefleksikan kondisi **branch `firebase`** (v1.0.0+5). Pada versi awal (v1.0) data disimpan secara lokal menggunakan SQLite; aplikasi telah **bermigrasi ke Firebase** untuk mendukung autentikasi aman, verifikasi email, dan sinkronisasi cloud.
 
 ---
 
@@ -39,10 +43,12 @@ Kepatuhan minum obat (*medication adherence*) merupakan salah satu tantangan ter
 
 | Masalah | Solusi JagaDosis |
 |---|---|
-| Lupa jadwal minum obat | Pengingat jadwal otomatis dengan alarm |
-| Tidak ada catatan konsumsi obat | Riwayat konsumsi obat terdokumentasi |
-| Sulit memantau kepatuhan | Dashboard kepatuhan harian visual |
-| Informasi dosis obat tersebar | Daftar obat terpusat dengan detail dosis |
+| Lupa jadwal minum obat | **Alarm nyata** berbunyi tepat pada jam minum + notifikasi 30/15 menit sebelumnya |
+| Notifikasi biasa mudah diabaikan | Alarm full-screen dengan suara & getar, tombol Matikan/Tunda (Snooze) |
+| Tidak ada catatan konsumsi obat | Riwayat konsumsi obat terdokumentasi (harian/bulanan/tahunan) |
+| Sulit memantau kepatuhan | Dashboard kepatuhan harian visual (circular progress) |
+| Data hilang saat ganti perangkat | Sinkronisasi cloud via Cloud Firestore per akun |
+| Keamanan akun | Firebase Authentication + verifikasi email |
 | Aplikasi kesehatan berbahasa asing | Antarmuka sepenuhnya Bahasa Indonesia |
 
 ---
@@ -50,15 +56,17 @@ Kepatuhan minum obat (*medication adherence*) merupakan salah satu tantangan ter
 ## 3. Tujuan Produk
 
 ### 3.1 Tujuan Utama
-1. **Meningkatkan kepatuhan minum obat** pengguna melalui sistem pengingat yang terintegrasi
-2. **Menyediakan catatan konsumsi obat** yang rapi dan mudah diakses
+1. **Meningkatkan kepatuhan minum obat** melalui sistem alarm + pengingat berlapis
+2. **Menyediakan catatan konsumsi obat** yang rapi, tersinkron, dan mudah diakses
 3. **Memberikan visualisasi kepatuhan** harian yang memotivasi pengguna
+4. **Menjaga keamanan & privasi data** pengguna (auth + persetujuan kebijakan)
 
 ### 3.2 Key Results (KR)
-- KR1: Pengguna dapat mencatat dan mengelola ≥1 jadwal obat aktif
-- KR2: Pengguna dapat melacak riwayat minum obat harian, bulanan, dan tahunan
-- KR3: Pengguna mendapatkan feedback visual kepatuhan minum obat ≥80%
-- KR4: Proses registrasi dan login pengguna berjalan lancar tanpa kendala
+- KR1: Pengguna dapat mencatat & mengelola ≥1 jadwal obat aktif
+- KR2: Alarm berbunyi tepat waktu pada setiap jam dosis, dengan pengulangan harian
+- KR3: Pengguna dapat melacak riwayat minum obat harian, bulanan, dan tahunan
+- KR4: Pengguna mendapatkan feedback visual kepatuhan minum obat
+- KR5: Registrasi (dengan verifikasi email) dan login berjalan aman & lancar
 
 ---
 
@@ -94,67 +102,56 @@ mindmap
 | **Kemampuan Teknologi** | Dasar hingga menengah |
 | **Kebutuhan Aksesibilitas** | Font besar, kontras warna tinggi |
 | **Bahasa** | Indonesia |
-| **Konektivitas** | Bisa offline (tanpa internet) |
+| **Konektivitas** | Butuh internet saat registrasi/login; operasi harian tetap jalan offline (cache Firestore) |
 
 ---
 
 ## 5. Fitur-Fitur Produk
 
-### 5.1 Modul Autentikasi (Authentication)
+### 5.1 Modul Autentikasi (Authentication) — Firebase Auth
 
 #### F-AUTH-01: Splash Screen
-- **Deskripsi**: Layar pembuka aplikasi dengan animasi premium (logo scale + fade + tagline)
-- **Behavior**:
-  - Menampilkan logo JagaDosis dengan animasi `elasticOut`
-  - Menampilkan tagline: *"Pendamping Pintar Jadwal Obat Anda"*
-  - Durasi animasi: 2 detik, auto-navigate: 4 detik
-  - Cek status login → jika sudah login, langsung ke Dashboard
-  - Jika belum login, navigasi ke halaman Login
-- **File terkait**: [splash_screen.dart](file:///d:/project/jagadosis/lib/screens/splash/splash_screen.dart)
+- Layar pembuka dengan animasi premium (logo scale + fade + tagline).
+- Menampilkan tagline: *"Pendamping Pintar Jadwal Obat Anda"*.
+- Mengecek status sesi → jika sudah login, langsung ke Dashboard; jika belum, ke Login.
+- **File**: `lib/screens/splash/splash_screen.dart`
 
 #### F-AUTH-02: Registrasi Pengguna
-- **Deskripsi**: Formulir pendaftaran akun baru
-- **Input Fields**:
-  - Nama Lengkap (wajib)
-  - Email (wajib, unik, validasi format)
-  - Kata Sandi (wajib, minimal 6 karakter)
-- **Validasi**:
-  - Email format validation via RegExp
-  - Password minimum length check
-  - Email uniqueness di database
-- **File terkait**: [register_page.dart](file:///d:/project/jagadosis/lib/screens/auth/register_page.dart)
+- Formulir pendaftaran akun baru (Nama, Email, Kata Sandi).
+- Menggunakan `FirebaseAuth.createUserWithEmailAndPassword`.
+- Menyimpan nama sebagai `displayName`, lalu **mengirim email verifikasi**.
+- Menyimpan profil awal ke Firestore (`users/{uid}`) beserta **versi persetujuan** kebijakan privasi & syarat ketentuan (`consentVersion`, `termsVersion`, `consentAcceptedAt`).
+- **File**: `lib/screens/auth/register_page.dart`, `lib/services/auth_service.dart`
 
 #### F-AUTH-03: Login Pengguna
-- **Deskripsi**: Formulir masuk ke akun
-- **Input Fields**:
-  - Email
-  - Kata Sandi (dengan toggle visibility)
-- **Behavior**:
-  - Validasi kredensial terhadap database SQLite
-  - Menyimpan sesi login via `SharedPreferences`
-  - Navigasi ke Dashboard setelah berhasil
-  - Menampilkan SnackBar error jika gagal
-- **File terkait**: [login_page.dart](file:///d:/project/jagadosis/lib/screens/auth/login_page.dart)
+- Formulir masuk (Email + Kata Sandi dengan toggle visibility).
+- Menggunakan `FirebaseAuth.signInWithEmailAndPassword`.
+- Menyimpan sesi lokal via `SharedPreferences` (`isLogin`, `userName`, `userEmail`).
+- Setelah login, memuat profil dari Firestore & menjadwalkan ulang alarm/notifikasi.
+- **File**: `lib/screens/auth/login_page.dart`
 
-#### F-AUTH-04: Lupa Kata Sandi
-- **Deskripsi**: Halaman untuk reset kata sandi
-- **File terkait**: [forgot_password_page.dart](file:///d:/project/jagadosis/lib/screens/auth/forgot_password_page.dart)
+#### F-AUTH-04: Verifikasi Email
+- Pengguna harus memverifikasi email agar akses penuh (guard).
+- Dapat mengirim ulang email verifikasi & me-refresh status verifikasi.
+- **File**: `lib/utils/email_verification_guard.dart`, `lib/screens/auth/auth_gate.dart`
 
-#### F-AUTH-05: Manajemen Sesi
-- **Deskripsi**: Persistensi status login pengguna
-- **Implementasi**:
-  - `SharedPreferences` menyimpan: `isLogin`, `userName`, `userEmail`
-  - Auto-login pada app restart jika sesi masih aktif
-  - Logout menghapus seluruh data sesi
-- **File terkait**: [preference_handler.dart](file:///d:/project/jagadosis/lib/database/preference_handler.dart)
+#### F-AUTH-05: Lupa Kata Sandi
+- Reset kata sandi via `FirebaseAuth.sendPasswordResetEmail`.
+- **File**: `lib/screens/auth/forgot_password_page.dart`
+
+#### F-AUTH-06: Manajemen Sesi & Sign-Out
+- `SharedPreferences` menyimpan status login & identitas ringkas untuk auto-login.
+- Saat logout: `FirebaseAuth.signOut`, hapus data PII lokal (foto, data diri) agar tidak bocor ke akun berikutnya di perangkat bersama, dan batalkan semua alarm/notifikasi.
+- **File**: `lib/database/preference_handler.dart`, `lib/services/auth_service.dart`
+
+#### Pesan Error Terlokalisasi
+`AuthService.messageFromException` menerjemahkan `FirebaseAuthException` ke Bahasa Indonesia (mis. *"Email atau kata sandi salah."*, *"Email ini sudah terdaftar."*, *"Tidak ada koneksi internet."*).
 
 ---
 
 ### 5.2 Modul Dashboard & Navigasi
 
-#### F-DASH-01: Bottom Navigation Bar
-- **Deskripsi**: Navigasi utama dengan 4 tab
-- **Tab Items**:
+#### F-DASH-01: Bottom Navigation Bar (4 Tab)
 
 | Index | Label | Icon (Active) | Icon (Inactive) |
 |---|---|---|---|
@@ -163,100 +160,72 @@ mindmap
 | 2 | Obat | `medical_services_rounded` | `medical_services_outlined` |
 | 3 | Profil | `person_rounded` | `person_outline_rounded` |
 
-- **Behavior**: Animated container dengan transisi warna dan bold text
-- **File terkait**: [dashboard_page.dart](file:///d:/project/jagadosis/lib/screens/dashboard_page.dart)
+- AnimatedContainer dengan transisi warna & bold text pada tab aktif.
+- **File**: `lib/screens/dashboard_page.dart`
 
 #### F-DASH-02: Halaman Beranda (Home Page)
-- **Deskripsi**: Dashboard utama yang menampilkan ringkasan informasi penting
-- **Komponen UI**:
-  1. **Greeting Section** — Sapaan dinamis berdasarkan waktu (Pagi/Siang/Malam) + nama pengguna
-  2. **Tanggal Hari Ini** — Format Indonesia (contoh: *"Rabu, 18 Juni 2026"*)
-  3. **Kartu Kepatuhan Harian** — Circular progress indicator dengan persentase kepatuhan
-  4. **Jadwal Terdekat** — Kartu obat berikutnya yang harus diminum (status `pending`)
-  5. **Tombol "Tandai Sudah Diminum"** — Menandai obat sebagai sudah dikonsumsi
-- **State Management**:
-  - Menghitung `adherencePercent` = (jumlah obat `taken` / total obat) × 100
-  - Menampilkan obat `pending` pertama berdasarkan urutan jadwal waktu
-  - Support Pull-to-Refresh via `RefreshIndicator`
-- **File terkait**: [home_page.dart](file:///d:/project/jagadosis/lib/screens/home/home_page.dart)
+- Sapaan dinamis (Pagi/Siang/Malam) + nama pengguna.
+- Tanggal hari ini format Indonesia (mis. *"Rabu, 9 Juli 2026"*).
+- Kartu kepatuhan harian (circular progress + persentase).
+- Jadwal terdekat (dose slot berstatus `pending`) + tombol **Tandai Sudah Diminum**.
+- Pull-to-Refresh.
+- **File**: `lib/screens/home/home_page.dart`
 
 ---
 
 ### 5.3 Modul Manajemen Obat (Medication Management)
 
 #### F-MED-01: Daftar Obat Aktif
-- **Deskripsi**: Menampilkan semua obat yang terdaftar
-- **Komponen UI**:
-  - Judul section + badge counter (*"3 OBAT"*)
-  - Kartu obat dengan icon dinamis berdasarkan jenis obat
-  - Informasi yang ditampilkan per kartu: Nama, Dosis, Instruksi, Jadwal
-  - Menu konteks (Bottom Sheet): **Hapus Obat** / **Ubah Obat**
-  - FAB: "Tambah Obat"
-  - Empty state illustration jika belum ada obat
-- **Icon Mapping**:
+- Daftar semua obat + badge counter, icon dinamis per jenis obat, menu konteks (Ubah/Hapus), FAB Tambah Obat, empty state.
+- **File**: `lib/screens/meds/medicine_page.dart`
 
-| Jenis Obat | Icon | Warna |
-|---|---|---|
-| Tablet (default) | `medication_rounded` | Medical Blue `#005AB6` |
-| Kapsul | `healing_rounded` | Wellness Green `#006D37` |
-| Sirup / ml | `vaccines_rounded` | Orange `#934700` |
-| Tetes | `opacity_rounded` | Teal |
+#### F-MED-02: Tambah / Ubah Obat
+- **Informasi dasar**: Nama Obat, Dosis + Satuan (Tablet, Kapsul, sdm, sdt, Tetes, Semprot, Sachet).
+- **Aturan pakai & waktu**: Frekuensi (1x–4x sehari / sesuai kebutuhan), hubungan dengan makanan (sebelum/sesudah/bersama/sebelum tidur), dan **beberapa waktu konsumsi** (time picker, jumlah menyesuaikan frekuensi).
+- Menyimpan ke Firestore & **langsung menjadwalkan alarm + notifikasi** untuk setiap slot waktu.
+- **File**: `lib/screens/meds/medicine_form_page.dart`
 
-- **File terkait**: [medicine_page.dart](file:///d:/project/jagadosis/lib/screens/meds/medicine_page.dart)
+#### F-MED-03: Hapus Obat
+- Konfirmasi → hapus dokumen di Firestore → batalkan seluruh alarm/notifikasi obat tsb.
 
-#### F-MED-02: Tambah Obat Baru
-- **Deskripsi**: Formulir penambahan obat baru yang komprehensif
-- **Section 1 — Informasi Dasar**:
-  - Nama Obat (TextFormField, wajib, validasi non-empty)
-  - Dosis + Satuan (contoh: "500 Tablet")
-- **Pilihan Satuan Dosis**:
-
-| Opsi |
-|---|
-| Tablet |
-| Kapsul |
-| Sendok Makan (sdm) |
-| Sendok Teh (sdt) |
-| Tetes |
-| Semprot |
-| Sachet / Bungkus |
-
-- **Section 2 — Aturan Pakai & Waktu**:
-  - Frekuensi: 1x, 2x, 3x, 4x Sehari, Sesuai Kebutuhan
-  - Hubungan dengan Makanan: Sebelum Makan, Sesudah Makan, Bersama Makanan, Sebelum Tidur
-  - Waktu Konsumsi (Time Picker) — jumlah alarm dinamis sesuai frekuensi
-- **Penyimpanan Data**:
-  - ID: timestamp milliseconds
-  - Dose format: `"{dosis} {satuan} • {hubungan makan} • {frekuensi}"`
-  - Schedule: waktu diurutkan kronologis, format `HH:mm`
-  - Status awal: `pending`
-- **Success Feedback**: Modal Bottom Sheet dengan animasi check icon
-- **File terkait**: [add_medicine_page.dart](file:///d:/project/jagadosis/lib/screens/meds/add_medicine_page.dart)
-
-#### F-MED-03: Update Obat
-- **Deskripsi**: Edit data obat yang sudah ada
-- **Behavior**: Pre-fill form dengan data obat existing, simpan perubahan
-- **File terkait**: [update_medicine_page.dart](file:///d:/project/jagadosis/lib/screens/meds/update_medicine_page.dart)
-
-#### F-MED-04: Hapus Obat
-- **Deskripsi**: Menghapus obat dari daftar
-- **Behavior**: Konfirmasi dialog → hapus dari database → reload list
+#### F-MED-04: Status Per-Slot & Reset Harian
+- Setiap obat menyimpan **status per slot waktu** (comma-separated, paralel dengan `scheduleTime`), mis. `"taken, pending"` untuk obat 2x sehari.
+- `statusDate` menandai tanggal status; status **otomatis ter-reset harian** (`resetDailyStatus`) sehingga obat kembali `pending` di hari baru.
+- `createdAt` mencegah slot yang jamnya sudah lewat *sebelum* obat dibuat langsung dianggap `missed`.
 
 #### F-MED-05: Tandai Sudah Diminum
-- **Deskripsi**: Menandai obat sebagai sudah dikonsumsi
-- **Behavior**:
-  1. Update status obat ke `taken` di tabel `medicines`
-  2. Buat record baru di tabel `histories` (timestamp + status `taken`)
-  3. Reload data beranda
-  4. Tampilkan SnackBar konfirmasi hijau
+- Update status slot terkait ke `taken`, catat entri baru ke koleksi `history`, perbarui tampilan kepatuhan.
 
 ---
 
-### 5.4 Modul Riwayat Konsumsi (Consumption History)
+### 5.4 Modul Pengingat: Alarm & Notifikasi
 
-#### F-HIST-01: Riwayat dengan Tiga Mode Tampilan
-- **Deskripsi**: Halaman riwayat konsumsi obat dengan kalender interaktif
-- **Mode Tampilan**:
+#### F-ALM-01: Alarm Nyata (package `alarm`)
+- Menjadwalkan **alarm berbunyi tepat pada jam dosis (jam-H)** untuk tiap slot waktu.
+- **Full-screen intent** (Android): layar alarm muncul walau app tertutup / layar terkunci.
+- Suara loop + fade-in 3 detik, getar, dan nada dapat dikustomisasi.
+- Karena package `alarm` bersifat *one-shot*, **pengulangan harian diemulasikan**: setelah dosis dikonfirmasi, slot dijadwalkan ulang untuk besok; `rescheduleAll()` juga dijalankan saat startup & saat app kembali ke foreground sebagai jaring pengaman.
+- **File**: `lib/services/alarm_service.dart`, `lib/screens/alarm/alarm_ring_page.dart`
+
+#### F-ALM-02: Layar Alarm Berbunyi (Ring Page)
+- Menampilkan nama obat & jam dosis.
+- Aksi: **Matikan** (tandai sudah diminum + jadwalkan ulang besok) atau **Tunda/Snooze** (default 10 menit, dapat diatur).
+- **File**: `lib/screens/alarm/alarm_ring_page.dart`
+
+#### F-ALM-03: Notifikasi Pengingat Dini (flutter_local_notifications)
+- Dua notifikasi per slot waktu: **30 menit** dan **15 menit** sebelum jam dosis.
+- Timezone-aware (`timezone` + `flutter_timezone`), `exactAllowWhileIdle`.
+- Channel Android dipilih dinamis sesuai preferensi suara/getar.
+- **File**: `lib/services/notification_service.dart`
+
+#### F-ALM-04: Sinkronisasi Terpusat
+- `NotificationService` menjadi *single façade*: setiap jadwalkan/batalkan/reschedule juga meneruskan ke `AlarmService`, sehingga alarm & notifikasi selalu konsisten.
+
+---
+
+### 5.5 Modul Riwayat Konsumsi (Consumption History)
+
+Halaman riwayat dengan kalender interaktif & tiga mode tampilan.
 
 ```mermaid
 graph LR
@@ -268,195 +237,205 @@ graph LR
     D --> G["Grid 12 Bulan<br/>+ navigasi tahun"]
 ```
 
-#### F-HIST-02: Mode Mingguan (Weekly View)
-- Menampilkan 7 hari dalam satu minggu (horizontal scroll)
-- Tanggal aktif di-highlight, hari depan (future) dimuted
-- Detail log harian dikelompokkan per waktu: **Pagi** (05–12), **Siang** (12–18), **Malam** (18+)
-- Tombol "Hari Ini" untuk quick-navigate
-
-#### F-HIST-03: Mode Bulanan (Monthly View)
-- Grid kalender bulanan penuh (Monday-first)
-- Navigasi bulan sebelumnya/selanjutnya
-- Indikator dot hijau pada tanggal yang memiliki log
-- Tap tanggal → switch ke weekly mode untuk detail
-
-#### F-HIST-04: Mode Tahunan (Yearly View)
-- Grid 4×3 bulan dalam satu tahun
-- Navigasi tahun sebelumnya/selanjutnya
-- Counter jumlah log per bulan
-- Tap bulan → switch ke monthly mode
-
-#### F-HIST-05: Kartu Adherence Summary
-- Circular progress indicator kepatuhan keseluruhan
-- Motivational text dinamis berdasarkan persentase
-
-- **File terkait**: [history_page.dart](file:///d:/project/jagadosis/lib/screens/history/history_page.dart)
+- **Mingguan**: 7 hari (horizontal scroll); detail dikelompokkan Pagi/Siang/Malam; tombol "Hari Ini".
+- **Bulanan**: grid kalender penuh + indikator dot pada tanggal yang punya log.
+- **Tahunan**: grid 12 bulan + counter log per bulan.
+- **Kartu adherence** dengan circular progress & motivational text.
+- Query rentang tanggal berjalan langsung di Firestore (single-field index pada `takenAt`).
+- **File**: `lib/screens/history/history_page.dart`, `lib/repositories/history_repository.dart`
 
 ---
 
-### 5.5 Modul Profil Pengguna (User Profile)
+### 5.6 Modul Profil Pengguna (User Profile)
 
 #### F-PROF-01: Tampilan Profil
-- **Deskripsi**: Halaman profil pengguna dengan informasi akun
-- **Komponen UI**:
-  - Avatar placeholder dengan icon edit
-  - Nama pengguna (dari `SharedPreferences`)
-  - Menu Settings:
+- Avatar (dapat mengganti foto via `image_picker`), nama pengguna, menu pengaturan, tombol Keluar.
+- **File**: `lib/screens/profile/profile_page.dart`
 
-| Menu | Deskripsi | Icon | Warna |
-|---|---|---|---|
-| Data Diri | Informasi pribadi dan rekam medis | `person_outline` | Medical Blue |
-| Pengaturan Notifikasi | Atur pengingat obat dan alarm | `notifications_active` | Wellness Green |
-| Kontak Darurat | Nomor penting dan dokter keluarga | `emergency` | Red `#EB5757` |
-| Pusat Bantuan | FAQ dan panduan penggunaan | `help_center` | Grey |
+#### F-PROF-02: Data Diri (Rekam Medis Ringkas)
+- Tanggal lahir, jenis kelamin, golongan darah, alergi.
+- Disimpan di Firestore (`users/{uid}`) & di-cache lokal untuk baca offline.
+- **File**: `lib/screens/profile/data_diri_page.dart`, `lib/repositories/user_profile_repository.dart`
 
-  - Tombol **Keluar** (Logout) berwarna merah
+#### F-PROF-03: Pengaturan Notifikasi
+- Toggle global pengingat, suara, getar, dan durasi Snooze.
+- Perubahan memicu penjadwalan ulang agar berlaku pada pengingat berikutnya.
+- **File**: `lib/screens/profile/notification_settings_page.dart`
 
-- **File terkait**: [profile_page.dart](file:///d:/project/jagadosis/lib/screens/profile/profile_page.dart)
+#### F-PROF-04: Nada Alarm
+- Memilih nada bawaan atau **mengimpor file audio sendiri** (`file_picker`), disalin ke direktori Documents aplikasi.
+- Preview nada via `audioplayers`.
+- **File**: `lib/screens/profile/alarm_sound_page.dart`
+
+#### F-PROF-05: Kontak Darurat
+- Menyimpan daftar kontak penting/dokter (disimpan sebagai JSON di `SharedPreferences`), dapat ditelepon via `url_launcher`.
+- **File**: `lib/screens/profile/emergency_contacts_page.dart`
+
+#### F-PROF-06: Pusat Bantuan
+- FAQ & panduan penggunaan.
+- **File**: `lib/screens/profile/help_center_page.dart`
+
+#### F-PROF-07: Legal
+- Halaman Kebijakan Privasi & Syarat-Ketentuan; versi persetujuan dicatat saat registrasi.
+- **File**: `lib/screens/legal/privacy_policy_page.dart`, `lib/screens/legal/terms_and_conditions_page.dart`
 
 ---
 
 ## 6. Arsitektur Teknis
 
-### 6.1 Pola Arsitektur
+### 6.1 Pola Arsitektur (Layered)
 
 ```mermaid
 graph TB
-    subgraph "Presentation Layer (UI/Screens)"
-        A1["SplashScreen"]
-        A2["LoginPage"]
-        A3["RegisterPage"]
-        A4["DashboardPage"]
-        A5["HomePage"]
-        A6["MedsPage"]
-        A7["AddMedicinePage"]
-        A8["UpdateMedicinePage"]
-        A9["HistoryPage"]
-        A10["ProfilePage"]
+    subgraph "Presentation Layer (Screens)"
+        A1["Splash / Auth Gate"]
+        A2["Login / Register / Forgot"]
+        A3["Dashboard + 4 Tab"]
+        A4["Home / Meds / History / Profile"]
+        A5["Alarm Ring Page"]
     end
-    
+
+    subgraph "Service Layer"
+        S1["AuthService"]
+        S2["NotificationService"]
+        S3["AlarmService"]
+        S4["ProfileService"]
+    end
+
     subgraph "Repository Layer"
         B1["MedicineRepository"]
         B2["HistoryRepository"]
+        B3["UserProfileRepository"]
     end
-    
-    subgraph "Data Layer"
-        C1["DatabaseService<br/>(SQLite - Singleton)"]
-        C2["PreferenceHandler<br/>(SharedPreferences)"]
+
+    subgraph "Data Sources"
+        C1["Firebase Auth"]
+        C2["Cloud Firestore<br/>(offline persistence)"]
+        C3["SharedPreferences<br/>(sesi & preferensi)"]
+        C4["Local Notifications<br/>+ alarm plugin"]
     end
-    
-    subgraph "Model Layer"
-        D1["UserModel"]
-        D2["MedicineModel"]
-        D3["HistoryModel"]
-    end
-    
-    A5 & A6 & A7 & A8 --> B1
-    A5 & A9 --> B2
-    A2 & A3 --> C1
-    A1 & A2 & A10 --> C2
-    B1 & B2 --> C1
-    C1 --> D1 & D2 & D3
+
+    A2 --> S1 --> C1
+    A4 --> B1 & B2 & B3
+    B1 & B2 & B3 --> C2
+    A3 & A4 --> C3
+    S2 --> C4
+    S2 --> S3
+    S3 --> B1
+    A5 --> S3
 ```
 
 ### 6.2 Struktur Folder Project
 
 ```
 lib/
-├── main.dart                          # Entry point
+├── main.dart                          # Entry point, init Firebase/alarm/notif, ring listener
+├── firebase_options.dart              # Konfigurasi Firebase per platform
 ├── database/
-│   ├── db_helper.dart                 # SQLite service (Singleton)
-│   └── preference_handler.dart        # SharedPreferences wrapper
+│   └── preference_handler.dart        # SharedPreferences (sesi, data diri cache, preferensi)
 ├── models/
-│   ├── user_model.dart                # User data model
-│   ├── medicine_model.dart            # Medicine data model
-│   └── history_model.dart             # History data model
+│   ├── user_profile_model.dart        # Profil & rekam medis pengguna
+│   ├── medicine_model.dart            # Obat + status per-slot + reset harian
+│   └── history_model.dart             # Riwayat konsumsi
 ├── repositories/
-│   ├── medicine_repository.dart       # CRUD obat
-│   └── history_repository.dart        # CRUD + query riwayat
+│   ├── medicine_repository.dart       # CRUD obat di Firestore (users/{uid}/medicines)
+│   ├── history_repository.dart        # Query riwayat di Firestore (users/{uid}/history)
+│   └── user_profile_repository.dart   # Profil di Firestore (users/{uid})
+├── services/
+│   ├── auth_service.dart              # Firebase Auth (register, login, verifikasi, reset)
+│   ├── notification_service.dart      # Notifikasi 30/15 menit + façade penjadwalan
+│   ├── alarm_service.dart             # Alarm nyata jam-H (package alarm)
+│   ├── profile_service.dart           # Orkestrasi profil (Firestore + cache lokal)
+│   └── medicine_events.dart           # Event/refresh antar layar
 ├── screens/
-│   ├── splash/splash_screen.dart      # Splash screen
-│   ├── auth/
-│   │   ├── login_page.dart            # Login
-│   │   ├── register_page.dart         # Register
-│   │   └── forgot_password_page.dart  # Forgot password
-│   ├── dashboard_page.dart            # Main navigation shell
-│   ├── home/home_page.dart            # Beranda
-│   ├── meds/
-│   │   ├── medicine_page.dart         # Daftar obat
-│   │   ├── add_medicine_page.dart     # Tambah obat
-│   │   └── update_medicine_page.dart  # Edit obat
-│   ├── history/history_page.dart      # Riwayat konsumsi
-│   └── profile/profile_page.dart      # Profil pengguna
+│   ├── splash/ · auth/ · alarm/
+│   ├── home/ · meds/ · history/
+│   ├── profile/ (data diri, notifikasi, nada alarm, kontak darurat, bantuan)
+│   ├── legal/ (privacy policy, terms & conditions)
+│   └── dashboard_page.dart
 ├── utils/
-│   └── app_colors.dart                # Design token warna
+│   ├── app_colors.dart                # Design token warna
+│   └── email_verification_guard.dart
 └── extensions/
-    └── navigator.dart                 # BuildContext navigation helpers
+    └── navigator.dart                 # Helper navigasi
 ```
 
 ---
 
-## 7. Data Model & Skema Database
+## 7. Data Model & Skema Database (Cloud Firestore)
 
-### 7.1 Database: `jagadosis.db` (SQLite, Version 3)
+Struktur berbasis dokumen, di-scope per pengguna melalui **Firebase Auth UID**. Firestore security rules memastikan tiap akun hanya mengakses datanya sendiri.
 
-#### Tabel `users`
+```
+users/{uid}                      # Dokumen profil pengguna
+   ├── medicines/{id}            # Sub-koleksi obat
+   └── history/{id}              # Sub-koleksi riwayat konsumsi
+```
 
-| Kolom | Tipe | Constraint | Keterangan |
-|---|---|---|---|
-| `id` | INTEGER | PRIMARY KEY AUTOINCREMENT | ID unik user |
-| `name` | TEXT | — | Nama lengkap |
-| `email` | TEXT | UNIQUE | Alamat email |
-| `password` | TEXT | — | Kata sandi (plain text) |
+### 7.1 Dokumen `users/{uid}` (UserProfile)
 
-#### Tabel `medicines`
+| Field | Tipe | Keterangan |
+|---|---|---|
+| `name` | string | Nama lengkap |
+| `email` | string | Email akun |
+| `birthDate` | string | Tanggal lahir |
+| `gender` | string | Jenis kelamin |
+| `bloodType` | string | Golongan darah |
+| `allergies` | string | Riwayat alergi |
+| `consentVersion` | string | Versi kebijakan privasi yang disetujui |
+| `termsVersion` | string | Versi syarat & ketentuan yang disetujui |
+| `consentAcceptedAt` | string (ISO-8601) | Waktu persetujuan |
+| `updatedAt` | timestamp | Server timestamp saat penyimpanan |
 
-| Kolom | Tipe | Constraint | Keterangan |
-|---|---|---|---|
-| `id` | TEXT | PRIMARY KEY | Timestamp milliseconds |
-| `medicineName` | TEXT | NOT NULL | Nama obat |
-| `dose` | TEXT | NOT NULL | Dosis + satuan + aturan |
-| `scheduleTime` | TEXT | NOT NULL | Waktu jadwal (HH:mm) |
-| `status` | TEXT | NOT NULL | `pending` / `taken` |
-| `enableNotification` | INTEGER | NOT NULL DEFAULT 1 | Toggle notifikasi |
+### 7.2 Sub-koleksi `medicines/{id}` (MedicineModel)
 
-#### Tabel `histories`
+| Field | Tipe | Keterangan |
+|---|---|---|
+| `id` | string | ID (timestamp ms) |
+| `medicineName` | string | Nama obat |
+| `dose` | string | Dosis + satuan + aturan pakai |
+| `scheduleTime` | string | Waktu (comma-separated, `HH:mm`) |
+| `status` | string | Status per-slot comma-separated (mis. `"taken, pending"`) |
+| `statusDate` | string | Tanggal berlakunya status (untuk reset harian) |
+| `enableNotification` | int (0/1) | Toggle pengingat per obat |
+| `createdAt` | string (ISO-8601) | Waktu obat dibuat |
 
-| Kolom | Tipe | Constraint | Keterangan |
-|---|---|---|---|
-| `id` | TEXT | PRIMARY KEY | Timestamp milliseconds |
-| `medicineName` | TEXT | NOT NULL | Nama obat yang dikonsumsi |
-| `takenAt` | TEXT | NOT NULL | ISO 8601 DateTime string |
-| `status` | TEXT | NOT NULL | `taken` / `missed` |
+### 7.3 Sub-koleksi `history/{id}` (HistoryModel)
 
-### 7.2 Entity Relationship
+| Field | Tipe | Keterangan |
+|---|---|---|
+| `id` | string | ID (timestamp ms) |
+| `medicineName` | string | Nama obat yang dikonsumsi |
+| `takenAt` | string (ISO-8601) | Waktu konsumsi (sortable & rentang query) |
+| `status` | string | `taken` / `missed` |
 
 ```mermaid
 erDiagram
+    USERS ||--o{ MEDICINES : "has"
+    USERS ||--o{ HISTORIES : "has"
     USERS {
-        int id PK
+        string uid PK
         string name
-        string email UK
-        string password
+        string email
+        string bloodType
+        string allergies
     }
-    
     MEDICINES {
         string id PK
         string medicineName
         string dose
         string scheduleTime
         string status
+        string statusDate
         int enableNotification
+        string createdAt
     }
-    
     HISTORIES {
         string id PK
         string medicineName
         string takenAt
         string status
     }
-    
-    MEDICINES ||--o{ HISTORIES : "generates"
 ```
 
 ---
@@ -466,28 +445,35 @@ erDiagram
 | Kategori | Teknologi | Versi |
 |---|---|---|
 | **Framework** | Flutter | SDK ^3.11.5 |
-| **Bahasa** | Dart | (bundled with Flutter) |
-| **Database Lokal** | sqflite | ^2.3.0 |
-| **Preferensi** | shared_preferences | ^2.5.5 |
-| **Tipografi** | google_fonts | ^8.1.0 |
-| **Notifikasi** | flutter_local_notifications | ^22.0.1 |
+| **Bahasa** | Dart | (bundled) |
+| **Autentikasi** | firebase_auth | ^6.5.4 |
+| **Database Cloud** | cloud_firestore | ^6.6.0 |
+| **Core Firebase** | firebase_core | ^4.11.0 |
+| **Alarm** | alarm | ^5.0.0 |
+| **Notifikasi Lokal** | flutter_local_notifications | ^22.0.1 |
 | **Timezone** | timezone + flutter_timezone | ^0.11.0 / ^5.1.0 |
+| **Audio** | audioplayers | ^6.1.0 |
+| **Preferensi Lokal** | shared_preferences | ^2.5.5 |
+| **Pilih Gambar** | image_picker | ^1.1.2 |
+| **Pilih File** | file_picker | ^8.1.4 |
+| **Buka URL/Telepon** | url_launcher | ^6.3.0 |
+| **Path** | path + path_provider | ^1.9.1 / ^2.1.5 |
+| **Tipografi** | google_fonts | ^8.1.0 |
 | **Internasionalisasi** | intl | ^0.20.2 |
-| **Linting** | flutter_lints | ^6.0.0 |
 | **App Icon** | flutter_launcher_icons | ^0.14.4 |
 
 ---
 
 ## 9. Design System
 
-### 9.1 Color Palette
+### 9.1 Color Palette (`lib/utils/app_colors.dart`)
 
 | Nama Token | Hex Code | Penggunaan |
 |---|---|---|
-| `medicalBlue` | `#005AB6` | Primary color, CTA, active nav |
+| `medicalBlue` | `#005AB6` | Primary, CTA, nav aktif |
 | `backgroundBlue` | `#F9F9FF` | Background utama |
-| `surfaceWhite` | `#FFFFFF` | Surface kartu/komponen |
-| `primaryContainer` | `#D7E3FF` | Background container ringan |
+| `surfaceWhite` | `#FFFFFF` | Surface kartu |
+| `primaryContainer` | `#D7E3FF` | Container ringan |
 | `onPrimaryContainer` | `#001B3F` | Teks di atas container |
 | `textDark` | `#191C22` | Teks utama |
 | `textGrey` | `#414753` | Teks sekunder |
@@ -495,52 +481,49 @@ erDiagram
 | `wellnessGreen` | `#006D37` | Status sukses/taken |
 
 ### 9.2 Tipografi
-- **Heading**: Plus Jakarta Sans (Bold)
+- **Heading**: Plus Jakarta Sans (Bold) — via `google_fonts`
 - **Body**: Inter (Regular/Medium)
-- **Ukuran**: 10px – 32px range
 
-### 9.3 Komponen Desain
-- **Border Radius**: 8–16px (konsisten rounded)
-- **Shadow**: Subtle box shadow (`black.withAlpha(5-15)`, blur 8–24px)
-- **Spacing**: 4px grid system (4, 8, 12, 16, 20, 24, 28, 32)
-- **Animasi**: 200–300ms duration, easeInOut/elasticOut curves
+### 9.3 Komponen
+- **Border Radius**: 8–16px
+- **Shadow**: subtle (`black.withAlpha(5–15)`, blur 8–24px)
+- **Spacing**: grid 4px
+- **Animasi**: 200–300ms, easeInOut/elasticOut
+- **Material 3** dengan `ColorScheme.fromSeed`
 
 ---
 
 ## 10. User Flow
 
-### 10.1 Flow Utama: Pertama Kali Menggunakan Aplikasi
+### 10.1 Onboarding (Pertama Kali)
 
 ```mermaid
 flowchart TD
-    A["🚀 Buka Aplikasi"] --> B["Splash Screen<br/>4 detik animasi"]
+    A["Buka Aplikasi"] --> B["Splash Screen"]
     B --> C{"Sudah Login?"}
     C -->|Ya| G["Dashboard"]
-    C -->|Tidak| D["Login Page"]
-    D -->|Belum punya akun| E["Register Page"]
-    E -->|Registrasi berhasil| D
-    D -->|Login berhasil| F["Simpan Sesi"]
+    C -->|Tidak| D["Login"]
+    D -->|Belum punya akun| E["Register + Setujui Kebijakan"]
+    E --> V["Kirim Email Verifikasi"]
+    V --> D
+    D -->|Login berhasil| F["Simpan Sesi + Muat Profil + Jadwalkan Alarm"]
     F --> G
-    G --> H["Beranda<br/>(Belum ada obat)"]
-    H --> I["Tap 'Tambah Obat'"]
-    I --> J["Isi Form Obat"]
-    J --> K["Simpan Obat ✅"]
-    K --> L["Kembali ke Dashboard"]
-    L --> M["Lihat Jadwal Terdekat"]
-    M --> N["Tap 'Tandai Sudah Diminum'"]
-    N --> O["Riwayat Tercatat 📝"]
+    G --> H["Tambah Obat"]
+    H --> I["Isi Form + Set Jadwal"]
+    I --> J["Alarm & Notifikasi Terjadwal"]
 ```
 
-### 10.2 Flow Harian: Penggunaan Rutin
+### 10.2 Alur Alarm Harian
 
 ```mermaid
 flowchart LR
-    A["Buka App"] --> B["Auto-login"]
-    B --> C["Lihat Jadwal<br/>Terdekat"]
-    C --> D["Minum Obat"]
-    D --> E["Tandai<br/>Sudah Diminum"]
-    E --> F["Kepatuhan<br/>Terupdate"]
-    F --> G["Cek Riwayat<br/>(Opsional)"]
+    A["Notif 30 & 15 menit sebelumnya"] --> B["Alarm berbunyi (jam-H)"]
+    B --> C["Ring Page tampil (full-screen)"]
+    C --> D{"Aksi User"}
+    D -->|Matikan| E["Status slot = taken<br/>Catat riwayat"]
+    D -->|Tunda| F["Snooze N menit"]
+    E --> G["Jadwalkan ulang untuk besok"]
+    F --> B
 ```
 
 ---
@@ -551,107 +534,64 @@ flowchart LR
 | Metrik | Target |
 |---|---|
 | Cold start (splash → dashboard) | ≤ 5 detik |
-| Query database (load obat/riwayat) | ≤ 500ms |
-| Ukuran APK | ≤ 30 MB |
+| Baca data (obat/riwayat) | Cepat via cache Firestore (≤ 500ms lokal) |
+| Akurasi alarm | Tepat pada menit terjadwal (exactAllowWhileIdle + alarm plugin) |
 | Responsivitas UI | 60 fps pada mid-range device |
 
-### 11.2 Keamanan
-| Aspek | Status Saat Ini | Rekomendasi |
-|---|---|---|
-| Penyimpanan password | ⚠️ Plain text di SQLite | 🔒 Hashing (bcrypt/argon2) |
-| Sesi login | SharedPreferences (non-encrypted) | 🔒 flutter_secure_storage |
-| Database | Tidak terenkripsi | 🔒 SQLCipher |
+### 11.2 Keamanan & Privasi
+| Aspek | Status Saat Ini |
+|---|---|
+| Autentikasi | ✅ Firebase Auth (email/password) + verifikasi email |
+| Password | ✅ Dikelola & di-hash oleh Firebase (tidak disimpan aplikasi) |
+| Isolasi data antar user | ✅ Data di-scope per UID + Firestore security rules |
+| Persetujuan kebijakan | ✅ Versi privasi & syarat dicatat saat registrasi |
+| PII lokal | ✅ Dihapus saat logout agar tidak bocor di perangkat bersama |
 
-### 11.3 Usability
-- Antarmuka sepenuhnya Bahasa Indonesia
-- Desain Material 3 dengan custom color scheme
-- Support pull-to-refresh pada beranda
-- Empty state informatif pada setiap section
-- Feedback visual (SnackBar, Modal) pada setiap aksi
+### 11.3 Reliabilitas
+- **Offline-first**: tulis/baca ke cache Firestore saat offline, sinkron otomatis saat online (timeout tulis 3 detik agar UI tidak menggantung).
+- **Jaring pengaman alarm**: reschedule saat startup & saat app resume agar hari tidak terlewat.
 
 ### 11.4 Kompatibilitas
-- **Android**: API 21+ (Android 5.0 Lollipop ke atas)
+- **Android**: API 21+
 - **iOS**: iOS 12.0+
-- **Web**: Chrome, Firefox, Safari (experimental)
 
 ---
 
 ## 12. Analisis Risiko & Mitigasi
 
-| # | Risiko | Dampak | Probabilitas | Mitigasi |
-|---|---|---|---|---|
-| R1 | Password disimpan plain text | 🔴 Tinggi | 🟡 Sedang | Implementasi hashing + enkripsi DB |
-| R2 | Data hanya lokal, rawan hilang | 🔴 Tinggi | 🟡 Sedang | Tambah fitur backup/export |
-| R3 | Tidak ada multi-user support per device | 🟡 Sedang | 🟢 Rendah | Fitur switch profil |
-| R4 | Status obat tidak auto-reset harian | 🟡 Sedang | 🟡 Sedang | Background service daily reset |
-| R5 | Notifikasi belum terimplementasi penuh | 🟡 Sedang | 🟡 Sedang | Integrasi flutter_local_notifications |
-| R6 | Tidak ada sinkronisasi cloud | 🟡 Sedang | 🟢 Rendah | Roadmap v2: Firebase sync |
+| # | Risiko | Dampak | Mitigasi |
+|---|---|---|---|
+| R1 | Alarm tidak bunyi saat app di-kill / OEM agresif (Xiaomi/Oppo) | 🔴 Tinggi | Full-screen intent, exact alarm permission, reschedule saat resume/startup; edukasi izin baterai |
+| R2 | Ketergantungan koneksi saat login/registrasi | 🟡 Sedang | Pesan error jaringan yang jelas; operasi harian tetap offline via cache |
+| R3 | Data lokal (kontak darurat) belum ikut tersinkron cloud | 🟡 Sedang | Roadmap: pindahkan ke Firestore |
+| R4 | Belum ada multi-profil dalam satu akun | 🟢 Rendah | Roadmap: profil keluarga |
+| R5 | Ketergantungan izin notifikasi (Android 13+) | 🟡 Sedang | Minta izin saat init; fallback informatif |
 
 ---
 
 ## 13. Roadmap Pengembangan
 
-### Phase 1: MVP ✅ (Current — v1.0.0)
-- [x] Sistem autentikasi (Login, Register, Logout)
-- [x] CRUD manajemen obat
-- [x] Dashboard beranda dengan kepatuhan harian
-- [x] Riwayat konsumsi obat (3 mode kalender)
-- [x] Halaman profil pengguna
-- [x] Desain UI/UX premium dengan Material 3
+### Phase 1: MVP Lokal ✅ (v1.0)
+- [x] Autentikasi lokal, CRUD obat, dashboard, riwayat, profil (berbasis SQLite)
 
-### Phase 2: Enhancement (v1.1.0)
-- [ ] Notifikasi push lokal berdasarkan jadwal obat
-- [ ] Auto-reset status obat harian (background service)
-- [ ] Hashing password (security hardening)
-- [ ] Export riwayat konsumsi ke PDF/CSV
-- [ ] Implementasi menu Data Diri, Pengaturan Notifikasi, Kontak Darurat
+### Phase 2: Migrasi Firebase & Pengingat ✅ (Current — v1.0.0+5)
+- [x] Migrasi ke Firebase Auth + Cloud Firestore (offline persistence)
+- [x] Verifikasi email & persetujuan kebijakan (privacy & terms)
+- [x] Alarm nyata jam-H (full-screen) + snooze
+- [x] Notifikasi pengingat 30 & 15 menit sebelum jadwal
+- [x] Status obat per-slot + reset harian otomatis
+- [x] Nada alarm kustom, pengaturan notifikasi, kontak darurat, pusat bantuan
+- [x] Data diri / rekam medis ringkas tersinkron cloud
 
 ### Phase 3: Scale (v2.0.0)
-- [ ] Cloud sync (Firebase / Supabase)
-- [ ] Multi-user / profil keluarga
-- [ ] Gamifikasi kepatuhan (streak, achievement, reward)
-- [ ] Integrasi dengan data farmasi (auto-suggest nama obat)
-- [ ] Dark mode support
-- [ ] Lokalisasi multi-bahasa
-
----
-
-## 14. Lampiran
-
-### 14.1 Daftar File Source Code
-
-| No | File | Ukuran | Fungsi |
-|---|---|---|---|
-| 1 | [main.dart](file:///d:/project/jagadosis/lib/main.dart) | 1.2 KB | Entry point, routing, theme |
-| 2 | [db_helper.dart](file:///d:/project/jagadosis/lib/database/db_helper.dart) | 6.3 KB | SQLite database service |
-| 3 | [preference_handler.dart](file:///d:/project/jagadosis/lib/database/preference_handler.dart) | 1.1 KB | SharedPreferences wrapper |
-| 4 | [user_model.dart](file:///d:/project/jagadosis/lib/models/user_model.dart) | 925 B | Model data user |
-| 5 | [medicine_model.dart](file:///d:/project/jagadosis/lib/models/medicine_model.dart) | 1.5 KB | Model data obat |
-| 6 | [history_model.dart](file:///d:/project/jagadosis/lib/models/history_model.dart) | 1.2 KB | Model data riwayat |
-| 7 | [medicine_repository.dart](file:///d:/project/jagadosis/lib/repositories/medicine_repository.dart) | 1.5 KB | Repository CRUD obat |
-| 8 | [history_repository.dart](file:///d:/project/jagadosis/lib/repositories/history_repository.dart) | 3.2 KB | Repository CRUD riwayat |
-| 9 | [splash_screen.dart](file:///d:/project/jagadosis/lib/screens/splash/splash_screen.dart) | 9.4 KB | Splash screen animasi |
-| 10 | [login_page.dart](file:///d:/project/jagadosis/lib/screens/auth/login_page.dart) | 18.5 KB | Halaman login |
-| 11 | [register_page.dart](file:///d:/project/jagadosis/lib/screens/auth/register_page.dart) | 19.9 KB | Halaman registrasi |
-| 12 | [forgot_password_page.dart](file:///d:/project/jagadosis/lib/screens/auth/forgot_password_page.dart) | 14.2 KB | Halaman lupa password |
-| 13 | [dashboard_page.dart](file:///d:/project/jagadosis/lib/screens/dashboard_page.dart) | 4.7 KB | Shell navigasi utama |
-| 14 | [home_page.dart](file:///d:/project/jagadosis/lib/screens/home/home_page.dart) | 17.2 KB | Halaman beranda |
-| 15 | [medicine_page.dart](file:///d:/project/jagadosis/lib/screens/meds/medicine_page.dart) | 15.6 KB | Daftar obat aktif |
-| 16 | [add_medicine_page.dart](file:///d:/project/jagadosis/lib/screens/meds/add_medicine_page.dart) | 25.3 KB | Form tambah obat |
-| 17 | [update_medicine_page.dart](file:///d:/project/jagadosis/lib/screens/meds/update_medicine_page.dart) | 27.6 KB | Form edit obat |
-| 18 | [history_page.dart](file:///d:/project/jagadosis/lib/screens/history/history_page.dart) | 44.5 KB | Riwayat konsumsi |
-| 19 | [profile_page.dart](file:///d:/project/jagadosis/lib/screens/profile/profile_page.dart) | 8.1 KB | Halaman profil |
-| 20 | [app_colors.dart](file:///d:/project/jagadosis/lib/utils/app_colors.dart) | 562 B | Design tokens |
-| 21 | [navigator.dart](file:///d:/project/jagadosis/lib/extensions/navigator.dart) | 1.9 KB | Navigation extensions |
-
-### 14.2 Statistik Codebase
-- **Total Dart files**: 21 files
-- **Total Lines of Code (estimasi)**: ~4,500+ LOC
-- **Architecture Pattern**: Repository Pattern (Layered)
-- **State Management**: StatefulWidget (built-in setState)
-- **Design Language**: Material 3 dengan custom tokens
+- [ ] Ekspor riwayat ke PDF/CSV
+- [ ] Gamifikasi kepatuhan (streak, achievement)
+- [ ] Multi-profil / profil keluarga dalam satu akun
+- [ ] Auto-suggest nama obat (integrasi data farmasi)
+- [ ] Dark mode & lokalisasi multi-bahasa
+- [ ] Sinkronisasi kontak darurat ke cloud
 
 ---
 
 > [!TIP]
-> Dokumen PRD ini disusun berdasarkan analisis langsung terhadap source code project JagaDosis. Semua fitur, arsitektur, dan data model yang didokumentasikan mencerminkan implementasi aktual pada codebase saat ini (v1.0.0).
+> Dokumen PRD ini disusun berdasarkan analisis langsung terhadap source code JagaDosis pada branch `firebase` (v1.0.0+5). Seluruh fitur, arsitektur, dan data model mencerminkan implementasi aktual pada codebase saat ini.
