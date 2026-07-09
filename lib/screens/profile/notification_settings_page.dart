@@ -39,6 +39,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       context,
       MaterialPageRoute(builder: (_) => const AlarmSoundPage()),
     );
+    // Push di atas baru selesai saat user keluar dari picker, jadi halaman ini
+    // bisa saja sudah tidak terpasang. Guard sebelum setState.
+    if (!mounted) return;
     setState(() {
       _alarmSoundName = PreferenceHandler.alarmSoundName;
     });
@@ -49,6 +52,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     // reminders off clears everything scheduled; turning them back on rebuilds
     // the schedule from the user's medicines.
     await PreferenceHandler.setNotificationGlobal(value);
+    if (!mounted) return;
     setState(() {
       _globalEnabled = value;
     });
@@ -61,6 +65,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
   Future<void> _updateSound(bool value) async {
     await PreferenceHandler.setNotificationSound(value);
+    if (!mounted) return;
     setState(() {
       _soundEnabled = value;
     });
@@ -71,6 +76,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
   Future<void> _updateVibration(bool value) async {
     await PreferenceHandler.setNotificationVibration(value);
+    if (!mounted) return;
     setState(() {
       _vibrationEnabled = value;
     });
@@ -88,6 +94,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   Future<void> _updateSnooze(int? value) async {
     if (value != null) {
       await PreferenceHandler.setNotificationSnooze(value);
+      if (!mounted) return;
       setState(() {
         _snoozeMinutes = value;
       });

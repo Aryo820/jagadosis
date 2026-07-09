@@ -12,20 +12,20 @@ import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Full-screen ringing UI shown when a medication alarm fires. Styled like the
-/// JagaDosis design mockup: a light, card-based layout showing the medicine's
-/// real name, dose and time (resolved from the ringing alarm's id), with a
-/// pulsing bell and a success overlay after the dose is confirmed.
+/// Tampilan layar penuh yang muncul saat alarm obat berbunyi. Gayanya mengikuti
+/// desain JagaDosis: kartu terang berisi nama obat, dosis, dan waktu (diambil
+/// dari id alarm yang berbunyi), dengan lonceng berdenyut dan overlay sukses
+/// setelah dosis dikonfirmasi.
 ///
-/// Reached via the Alarm.ringing listener in main.dart. Silent dismissal is
-/// blocked (see [PopScope] below): a ringing dose can only be resolved by
-/// "Sudah Minum" or "Tunda", never swiped away.
+/// Dibuka lewat listener Alarm.ringing di main.dart. Menutup diam-diam diblokir
+/// (lihat [PopScope] di bawah): dosis yang sedang berbunyi hanya bisa
+/// diselesaikan lewat "Sudah Minum" atau "Tunda", tidak bisa di-swipe.
 class AlarmRingPage extends StatefulWidget {
   const AlarmRingPage({super.key, required this.settings});
 
-  /// The alarm that is currently ringing. Carries the medicine name and time in
-  /// its notification title/body, used as a fallback when the medicine can no
-  /// longer be resolved (e.g. it was deleted while ringing).
+  /// Alarm yang sedang berbunyi. Nama obat dan waktunya dibawa di judul/isi
+  /// notifikasi, dipakai sebagai cadangan kalau obatnya sudah tidak bisa
+  /// ditemukan lagi (misal dihapus saat alarm berbunyi).
   final AlarmSettings settings;
 
   @override
@@ -36,24 +36,25 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
 
-  /// How long the alarm rings before it gives up: it auto-stops and the dose is
-  /// marked 'missed' so an unanswered alarm can't loop forever.
+  /// Berapa lama alarm berdering sebelum menyerah: alarm berhenti otomatis dan
+  /// dosis ditandai 'missed', supaya alarm yang tidak dijawab tidak berdering
+  /// selamanya.
   static const Duration _autoStopAfter = Duration(minutes: 1);
 
-  /// Resolved dose behind this ring, or null while loading / if unresolvable.
+  /// Dosis di balik alarm ini, atau null selama masih dimuat / tidak ditemukan.
   MedicineModel? _medicine;
   int _timeIndex = 0;
   bool _resolved = false;
 
-  /// True once the dose has been confirmed; drives the success overlay.
+  /// Bernilai true setelah dosis dikonfirmasi; memunculkan overlay sukses.
   bool _taken = false;
 
-  /// Guards the three terminal actions (taken / snooze / auto-miss) so a manual
-  /// tap landing at the same instant the auto-stop timer fires runs only once.
+  /// Menjaga tiga aksi terminal (taken / snooze / auto-miss) agar tap manual
+  /// yang terjadi tepat saat timer auto-stop menyala hanya dijalankan sekali.
   bool _finalizing = false;
 
-  /// Ticks down the auto-stop countdown once a second; fires the auto-miss when
-  /// it reaches zero. Cancelled as soon as the user acts or the page closes.
+  /// Menghitung mundur countdown auto-stop tiap satu detik; memicu auto-miss
+  /// saat mencapai nol. Dibatalkan begitu user beraksi atau halaman ditutup.
   Timer? _autoStopTimer;
   int _remainingSeconds = _autoStopAfter.inSeconds;
 
@@ -68,8 +69,8 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     _startAutoStopCountdown();
   }
 
-  /// Starts the one-per-second countdown that auto-stops the ring when it hits
-  /// zero, marking the dose as missed.
+  /// Memulai hitung mundur per detik yang menghentikan alarm otomatis saat
+  /// mencapai nol, lalu menandai dosis sebagai terlewat (missed).
   void _startAutoStopCountdown() {
     _autoStopTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
@@ -84,14 +85,14 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     });
   }
 
-  /// Remaining auto-stop time as "m:ss" for the countdown hint.
+  /// Sisa waktu auto-stop dalam format "m:ss" untuk teks hitung mundur.
   String get _countdownLabel {
     final s = _remainingSeconds.clamp(0, _autoStopAfter.inSeconds);
     return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
   }
 
-  /// Resolves which medicine + dose slot rang so the card can show real data.
-  /// On failure the UI falls back to the alarm's notification text.
+  /// Mencari obat + slot dosis mana yang berbunyi supaya kartu bisa menampilkan
+  /// data asli. Kalau gagal, tampilan memakai teks notifikasi alarm.
   Future<void> _resolveDose() async {
     final resolved = await AlarmService().resolveSlot(widget.settings.id);
     if (!mounted) return;
@@ -109,10 +110,11 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     super.dispose();
   }
 
-  /// Confirms the dose: marks the slot taken, logs history, stops the ring and
-  /// re-arms the medicine's next occurrences, then shows the success overlay.
-  /// Mirrors _markSlotAsTaken in home_page.dart so the dashboard and history
-  /// stay consistent whether a dose is confirmed from the alarm or the app.
+  /// Mengonfirmasi dosis: menandai slot 'taken', mencatat riwayat, menghentikan
+  /// alarm, memasang lagi alarm untuk jadwal berikutnya, lalu menampilkan
+  /// overlay sukses. Sama seperti _markSlotAsTaken di home_page.dart supaya
+  /// dashboard dan riwayat tetap konsisten, baik dosis dikonfirmasi dari alarm
+  /// maupun dari dalam aplikasi.
   Future<void> _onTaken() async {
     if (_finalizing) return;
     _finalizing = true;
@@ -133,18 +135,20 @@ class _AlarmRingPageState extends State<AlarmRingPage>
         ),
       );
 
-      // Tell any open screen (e.g. HomePage's "jadwal terdekat") to refresh so
-      // the dose disappears from the schedule immediately, without a tab switch.
+      // Beri tahu layar yang sedang terbuka (mis. "jadwal terdekat" di HomePage)
+      // agar refresh, sehingga dosis langsung hilang dari jadwal tanpa perlu
+      // pindah tab.
       notifyMedicineDataChanged();
 
-      // Stop the ring and re-arm this medicine's next occurrences from its real
-      // schedule. Using the schedule (not ringing.dateTime + 1 day) keeps the
-      // next day at the correct time even when the alarm was snoozed first.
+      // Hentikan alarm lalu pasang lagi untuk jadwal obat berikutnya berdasarkan
+      // jadwal aslinya. Memakai jadwal (bukan ringing.dateTime + 1 hari) membuat
+      // alarm hari berikutnya tetap di jam yang benar walau tadi sempat ditunda.
       await Alarm.stop(widget.settings.id);
       await AlarmService().scheduleForMedicine(updated);
     } else {
-      // Medicine was deleted while ringing: just stop. Any stray alarm is
-      // cleared by the next rescheduleAll (startup/resume).
+      // Obat dihapus saat alarm berbunyi: cukup hentikan saja. Sisa alarm yang
+      // menggantung akan dibersihkan oleh rescheduleAll berikutnya (saat
+      // aplikasi dibuka/dilanjutkan).
       await Alarm.stop(widget.settings.id);
     }
 
@@ -161,9 +165,10 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     if (mounted) Navigator.of(context).pop();
   }
 
-  /// Fired when the auto-stop countdown expires with no user action: silences
-  /// the ring, records the dose as missed, re-arms tomorrow's alarm, and closes
-  /// the screen. Mirrors [_onTaken] but writes a 'missed' status instead.
+  /// Dijalankan saat hitung mundur auto-stop habis tanpa ada aksi user:
+  /// mematikan alarm, mencatat dosis sebagai terlewat (missed), memasang lagi
+  /// alarm untuk besok, dan menutup layar. Sama seperti [_onTaken] tapi menulis
+  /// status 'missed'.
   Future<void> _onAutoMissed() async {
     if (_finalizing) return;
     _finalizing = true;
@@ -195,10 +200,10 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     if (mounted) Navigator.of(context).pop();
   }
 
-  // --- Parsed dose fields, derived from the medicine's composite `dose` string.
-  // Same parsing the home page uses:
-  //   Old: "500 mg • Tablet • Sesudah Makan • 1x Sehari" (4 parts)
-  //   New: "500 Tablet • Sesudah Makan • 1x Sehari"      (3 parts)
+  // --- Bagian dosis hasil pecahan dari string gabungan `dose` milik obat.
+  // Cara pecahnya sama dengan yang dipakai di halaman home:
+  //   Lama: "500 mg • Tablet • Sesudah Makan • 1x Sehari" (4 bagian)
+  //   Baru: "500 Tablet • Sesudah Makan • 1x Sehari"      (3 bagian)
 
   List<String> get _doseParts => (_medicine?.dose ?? '').split(' • ');
   bool get _isOldFormat => _doseParts.length >= 4;
@@ -212,8 +217,8 @@ class _AlarmRingPageState extends State<AlarmRingPage>
       ? _doseParts[2]
       : (_doseParts.length > 1 ? _doseParts[1] : '');
 
-  /// The dose time for this slot, e.g. "08:00". Falls back to the alarm's
-  /// scheduled time when the medicine can't be resolved.
+  /// Jam dosis untuk slot ini, mis. "08:00". Memakai jam terjadwal dari alarm
+  /// sebagai cadangan kalau obatnya tidak bisa ditemukan.
   String get _timeLabel {
     final times = _medicine?.scheduleTimes ?? const [];
     if (_timeIndex >= 0 && _timeIndex < times.length) return times[_timeIndex];
@@ -222,11 +227,11 @@ class _AlarmRingPageState extends State<AlarmRingPage>
         '${dt.minute.toString().padLeft(2, '0')}';
   }
 
-  /// Medicine name for the card; falls back to the notification title's payload.
+  /// Nama obat untuk kartu; memakai isi judul notifikasi sebagai cadangan.
   String get _medicineName =>
       _medicine?.medicineName ?? (_resolved ? 'Obat Anda' : '');
 
-  /// Subtitle under the name: dosage + meal relation when available.
+  /// Subjudul di bawah nama: dosis + aturan makan bila tersedia.
   String get _doseSubtitle {
     if (_medicine == null) return widget.settings.notificationSettings.body;
     final buffer = StringBuffer(_dosage);
@@ -234,7 +239,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     return buffer.toString();
   }
 
-  /// Value shown in the "Dosis" tile, e.g. "1 Tablet" or the raw dosage.
+  /// Nilai yang tampil di kotak "Dosis", mis. "1 Tablet" atau dosis apa adanya.
   String get _dosisValue => _form.isNotEmpty ? '1 $_form' : _dosage;
 
   IconData get _medIcon {
@@ -252,8 +257,8 @@ class _AlarmRingPageState extends State<AlarmRingPage>
   Widget build(BuildContext context) {
     final snoozeMinutes = PreferenceHandler.notificationSnooze;
 
-    // Block the hardware back button: the alarm must be stopped or snoozed via
-    // the buttons, never dismissed silently while still ringing.
+    // Blokir tombol back perangkat: alarm harus dihentikan atau ditunda lewat
+    // tombol, tidak boleh ditutup diam-diam selagi masih berbunyi.
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -281,7 +286,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
   Widget _buildContent(int snoozeMinutes) {
     return Column(
       children: [
-        // Brand header
+        // Judul brand
         SizedBox(
           height: 64,
           child: Center(
@@ -300,7 +305,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
             child: Column(
               children: [
-                // Pulsing bell
+                // Lonceng berdenyut
                 ScaleTransition(
                   scale: Tween<double>(begin: 1.0, end: 1.06).animate(
                     CurvedAnimation(
@@ -380,7 +385,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // Header stripe
+          // Garis atas kartu
           Container(height: 12, color: AppColors.medicalBlue),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -496,7 +501,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
       constraints: const BoxConstraints(maxWidth: 400),
       child: Column(
         children: [
-          // Primary: taken
+          // Tombol utama: sudah minum
           SizedBox(
             width: double.infinity,
             height: 72,
@@ -522,7 +527,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
             ),
           ),
           const SizedBox(height: 14),
-          // Secondary: snooze
+          // Tombol kedua: tunda
           SizedBox(
             width: double.infinity,
             height: 60,

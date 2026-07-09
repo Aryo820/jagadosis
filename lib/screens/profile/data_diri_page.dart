@@ -73,7 +73,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
         );
       },
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _birthDateController.text = "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}";
       });

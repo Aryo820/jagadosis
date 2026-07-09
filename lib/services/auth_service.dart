@@ -48,7 +48,20 @@ class AuthService {
 
   /// Refreshes the current user from the server so [isEmailVerified] reflects a
   /// verification the user just completed in their browser.
-  Future<void> reloadCurrentUser() => _auth.currentUser?.reload() ?? Future.value();
+  ///
+  /// reload() only updates the client-side [User.emailVerified] flag. Firestore
+  /// security rules, however, read `email_verified` from the ID *token*, which
+  /// is cached (~1 hour) and is NOT refreshed by reload(). Without forcing a new
+  /// token, a just-verified user still fails every verification-gated write
+  /// (e.g. adding a medicine) with permission-denied even though the app thinks
+  /// they're verified. getIdToken(true) mints a fresh token carrying the updated
+  /// claim, so the rules and the app agree.
+  Future<void> reloadCurrentUser() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await user.reload();
+    await _auth.currentUser?.getIdToken(true);
+  }
 
   /// Signs in with [email] and [password].
   /// Throws [FirebaseAuthException] on failure (e.g. wrong password).

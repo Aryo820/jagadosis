@@ -87,6 +87,11 @@ class _HistoryPageState extends State<HistoryPage>
       final takenCount = logs.where((log) => log.status == 'taken').length;
       final totalCount = logs.length;
 
+      // Halaman ini di-dispose saat pindah tab (dashboard memakai switch, bukan
+      // IndexedStack). Bila load masih berjalan ketika user meninggalkan tab
+      // History, setState/_animController di sini akan menyentuh State yang sudah
+      // mati dan melempar exception. Guard mounted mencegahnya.
+      if (!mounted) return;
       setState(() {
         _histories = logs;
         _weeklyAdherence = totalCount == 0
@@ -99,6 +104,7 @@ class _HistoryPageState extends State<HistoryPage>
       _animController.reset();
       _animController.forward();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });

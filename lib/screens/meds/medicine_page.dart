@@ -403,15 +403,25 @@ class _MedsPageState extends State<MedsPage> {
                                 ),
                               ),
                               onTap: () async {
+                                // Tutup bottom sheet dulu. Ini me-`pop` route
+                                // sheet sehingga `context` di sini (milik sheet)
+                                // langsung unmounted.
                                 Navigator.pop(context);
+                                // Karena itu, guard & navigasi HARUS memakai
+                                // context halaman (`this.context` milik State),
+                                // bukan `context` sheet yang sudah mati. Memakai
+                                // context sheet membuat `context.mounted` bernilai
+                                // false sehingga `Navigator.push` tak pernah jalan
+                                // dan form edit tak pernah terbuka.
+                                if (!mounted) return;
                                 if (!await EmailVerificationGuard.ensureVerified(
-                                  context,
+                                  this.context,
                                 )) {
                                   return;
                                 }
-                                if (!context.mounted) return;
+                                if (!mounted) return;
                                 final result = await Navigator.push(
-                                  context,
+                                  this.context,
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         MedicineFormPage(medicine: medicine),

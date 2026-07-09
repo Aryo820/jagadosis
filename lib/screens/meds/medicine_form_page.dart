@@ -2,6 +2,7 @@ import 'package:aplikasi/models/medicine_model.dart';
 import 'package:aplikasi/repositories/medicine_repository.dart';
 import 'package:aplikasi/services/notification_service.dart';
 import 'package:aplikasi/utils/app_colors.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -29,6 +30,10 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
 
   final MedicineRepository _repository = MedicineRepository();
   final NotificationService _notificationService = NotificationService();
+
+  /// True selagi proses simpan berjalan; menonaktifkan tombol dan menampilkan
+  /// indikator loading supaya user tidak menekan simpan berkali-kali.
+  bool _isSaving = false;
 
   // Selections
   String _selectedDosageUnit = 'Tablet';
@@ -184,6 +189,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
 
   /// Validates, persists (insert or update), and (re)schedules notifications.
   void _saveMedication() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
 
     // Sort times chronologically.
@@ -243,18 +249,84 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       createdAt: existing?.createdAt ?? DateTime.now(),
     );
 
-    if (widget.isEditing) {
-      await _repository.updateMedicine(medicine);
-      // Cancel old notifications and schedule new ones with updated times.
-      await _notificationService.cancelForMedicine(medicine.id);
-      await _notificationService.scheduleForMedicine(medicine);
-    } else {
-      await _repository.addMedicine(medicine);
-      await _notificationService.scheduleForMedicine(medicine);
+    // Bungkus dengan try/catch: tanpa ini, kegagalan write (mis. Firestore
+    // menolak karena email belum terverifikasi → 'permission-denied', atau
+    // tidak ada koneksi) akan melempar exception yang tidak tertangkap sehingga
+    // halaman diam tanpa umpan balik. Loading state mencegah tekan berulang.
+    // Hanya kegagalan *write* (repository) yang menghentikan alur dan menandai
+    // simpan gagal. Penjadwalan notifikasi/alarm sengaja TIDAK ikut menahan
+    // hasil simpan: panggilan plugin (Alarm.set / zonedSchedule) bisa
+    // menggantung bila izin exact-alarm/notifikasi belum diberikan atau
+    // platform channel tak merespons — dan bila di-await langsung, tombol akan
+    // berputar selamanya walau obat sudah tersimpan. Jadi: simpan dulu,
+    // tampilkan sukses, lalu jadwalkan notif secara best-effort.
+    setState(() => _isSaving = true);
+    try {
+      if (widget.isEditing) {
+        await _repository.updateMedicine(medicine);
+      } else {
+        await _repository.addMedicine(medicine);
+      }
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      _showError(
+        e.code == 'permission-denied'
+            ? 'Gagal menyimpan: email Anda belum terverifikasi. Buka link '
+                  'verifikasi di email Anda, lalu coba lagi.'
+            : 'Gagal menyimpan obat. Periksa koneksi internet Anda lalu coba lagi.',
+      );
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      _showError(
+        'Gagal menyimpan obat. Periksa koneksi internet Anda lalu coba lagi.',
+      );
+      return;
     }
 
+    // Write sukses → segera lepas loading dan tampilkan sukses. Penjadwalan
+    // notif berjalan setelah ini tanpa menahan UI.
     if (!mounted) return;
+    setState(() => _isSaving = false);
     _showSuccessSheet();
+
+    // Best-effort: jadwalkan notif/alarm tanpa memblokir. Diberi timeout agar
+    // panggilan plugin yang menggantung tidak menjadi kebocoran; kegagalan di
+    // sini tidak membatalkan simpan (obat sudah tersimpan) dan sudah ditelan di
+    // dalam masing-masing service (di-log, tidak dilempar).
+    _scheduleNotifications(medicine);
+  }
+
+  /// Menjadwalkan (ulang) notifikasi & alarm untuk [medicine] secara terpisah
+  /// dari alur simpan, sehingga penjadwalan yang lambat/menggantung tidak pernah
+  /// membekukan tombol simpan. Semua kegagalan hanya di-log.
+  Future<void> _scheduleNotifications(MedicineModel medicine) async {
+    try {
+      await () async {
+        if (widget.isEditing) {
+          await _notificationService.cancelForMedicine(medicine.id);
+        }
+        await _notificationService.scheduleForMedicine(medicine);
+      }().timeout(const Duration(seconds: 8));
+    } catch (_) {
+      // Diabaikan: obat sudah tersimpan. rescheduleAll() saat app dibuka lagi
+      // akan mencoba memasang ulang pengingat yang gagal di sini.
+    }
+  }
+
+  /// Menampilkan pesan error simpan lewat SnackBar merah.
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.inter()),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   /// Shows the success bottom sheet, with copy adapted to add/edit mode.
@@ -620,30 +692,41 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       width: double.infinity,
       height: 54.0,
       child: ElevatedButton(
-        onPressed: _saveMedication,
+        onPressed: _isSaving ? null : _saveMedication,
         style: ElevatedButton.styleFrom(
           backgroundColor: _selectedColor,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: _selectedColor.withAlpha(120),
+          disabledForegroundColor: Colors.white,
           elevation: 4.0,
           shadowColor: _selectedColor.withAlpha(80),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.save_rounded, size: 20.0),
-            const SizedBox(width: 8.0),
-            Text(
-              widget.isEditing ? 'Simpan Perubahan' : 'Simpan Obat',
-              style: GoogleFonts.inter(
-                fontSize: 16.0,
-                fontWeight: FontWeight.bold,
+        child: _isSaving
+            ? const SizedBox(
+                width: 22.0,
+                height: 22.0,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.save_rounded, size: 20.0),
+                  const SizedBox(width: 8.0),
+                  Text(
+                    widget.isEditing ? 'Simpan Perubahan' : 'Simpan Obat',
+                    style: GoogleFonts.inter(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
