@@ -20,7 +20,7 @@ class _HistoryPageState extends State<HistoryPage>
   DateTime _selectedDate = DateTime.now();
   List<HistoryModel> _histories = [];
   bool _isLoading = true;
-  int _weeklyAdherence = 100;
+  int _weeklyAdherence = 0;
   CalendarViewMode _viewMode = CalendarViewMode.weekly;
 
   // For monthly calendar navigation
@@ -81,14 +81,16 @@ class _HistoryPageState extends State<HistoryPage>
 
       // Adherence must reflect the period currently in view (the logs just
       // fetched for this day/month/year), not an all-time total — otherwise the
-      // percentage wouldn't match the entries shown right below it.
+      // percentage wouldn't match the entries shown right below it. With no logs
+      // in the period there is no adherence to report, so it shows 0% rather
+      // than a misleading 100%.
       final takenCount = logs.where((log) => log.status == 'taken').length;
       final totalCount = logs.length;
 
       setState(() {
         _histories = logs;
         _weeklyAdherence = totalCount == 0
-            ? 100
+            ? 0
             : ((takenCount / totalCount) * 100).round();
         _isLoading = false;
       });

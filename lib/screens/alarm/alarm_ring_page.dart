@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:alarm/alarm.dart';
 import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/models/history_model.dart';
@@ -34,6 +36,10 @@ class _AlarmRingPageState extends State<AlarmRingPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
 
+  /// How long the alarm rings before it gives up: it auto-stops and the dose is
+  /// marked 'missed' so an unanswered alarm can't loop forever.
+  static const Duration _autoStopAfter = Duration(minutes: 1);
+
   /// Resolved dose behind this ring, or null while loading / if unresolvable.
   MedicineModel? _medicine;
   int _timeIndex = 0;
@@ -41,6 +47,15 @@ class _AlarmRingPageState extends State<AlarmRingPage>
 
   /// True once the dose has been confirmed; drives the success overlay.
   bool _taken = false;
+
+  /// Guards the three terminal actions (taken / snooze / auto-miss) so a manual
+  /// tap landing at the same instant the auto-stop timer fires runs only once.
+  bool _finalizing = false;
+
+  /// Ticks down the auto-stop countdown once a second; fires the auto-miss when
+  /// it reaches zero. Cancelled as soon as the user acts or the page closes.
+  Timer? _autoStopTimer;
+  int _remainingSeconds = _autoStopAfter.inSeconds;
 
   @override
   void initState() {
@@ -50,6 +65,29 @@ class _AlarmRingPageState extends State<AlarmRingPage>
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
     _resolveDose();
+    _startAutoStopCountdown();
+  }
+
+  /// Starts the one-per-second countdown that auto-stops the ring when it hits
+  /// zero, marking the dose as missed.
+  void _startAutoStopCountdown() {
+    _autoStopTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _remainingSeconds--);
+      if (_remainingSeconds <= 0) {
+        timer.cancel();
+        _onAutoMissed();
+      }
+    });
+  }
+
+  /// Remaining auto-stop time as "m:ss" for the countdown hint.
+  String get _countdownLabel {
+    final s = _remainingSeconds.clamp(0, _autoStopAfter.inSeconds);
+    return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
   }
 
   /// Resolves which medicine + dose slot rang so the card can show real data.
@@ -66,6 +104,7 @@ class _AlarmRingPageState extends State<AlarmRingPage>
 
   @override
   void dispose() {
+    _autoStopTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
@@ -75,6 +114,10 @@ class _AlarmRingPageState extends State<AlarmRingPage>
   /// Mirrors _markSlotAsTaken in home_page.dart so the dashboard and history
   /// stay consistent whether a dose is confirmed from the alarm or the app.
   Future<void> _onTaken() async {
+    if (_finalizing) return;
+    _finalizing = true;
+    _autoStopTimer?.cancel();
+
     final medicine = _medicine;
     if (medicine != null) {
       final updated = medicine.copyWithSlotStatus(_timeIndex, 'taken');
@@ -109,8 +152,46 @@ class _AlarmRingPageState extends State<AlarmRingPage>
   }
 
   Future<void> _onSnooze() async {
+    if (_finalizing) return;
+    _finalizing = true;
+    _autoStopTimer?.cancel();
+
     final minutes = PreferenceHandler.notificationSnooze;
     await AlarmService().snooze(widget.settings, Duration(minutes: minutes));
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  /// Fired when the auto-stop countdown expires with no user action: silences
+  /// the ring, records the dose as missed, re-arms tomorrow's alarm, and closes
+  /// the screen. Mirrors [_onTaken] but writes a 'missed' status instead.
+  Future<void> _onAutoMissed() async {
+    if (_finalizing) return;
+    _finalizing = true;
+    _autoStopTimer?.cancel();
+
+    final medicine = _medicine;
+    if (medicine != null) {
+      final updated = medicine.copyWithSlotStatus(_timeIndex, 'missed');
+      await MedicineRepository().updateMedicine(updated);
+
+      final now = DateTime.now();
+      await HistoryRepository().addHistory(
+        HistoryModel(
+          id: '${now.millisecondsSinceEpoch}_${medicine.id}_$_timeIndex',
+          medicineName: medicine.medicineName,
+          takenAt: now,
+          status: 'missed',
+        ),
+      );
+
+      notifyMedicineDataChanged();
+
+      await Alarm.stop(widget.settings.id);
+      await AlarmService().scheduleForMedicine(updated);
+    } else {
+      await Alarm.stop(widget.settings.id);
+    }
+
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -469,6 +550,27 @@ class _AlarmRingPageState extends State<AlarmRingPage>
             "Menekan 'Sudah Minum' akan mencatat riwayat hari ini.",
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(fontSize: 12, color: AppColors.textGrey),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.timer_outlined,
+                size: 14,
+                color: AppColors.textGrey,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Alarm berhenti otomatis dalam $_countdownLabel',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            ],
           ),
         ],
       ),

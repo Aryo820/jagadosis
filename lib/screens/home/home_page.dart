@@ -263,14 +263,11 @@ class _HomePageState extends State<HomePage> {
       final slots = _buildSlots(list);
 
       int takenCount = 0;
-      int missedCount = 0;
       _DoseSlot? nextPending;
 
       for (final slot in slots) {
         if (slot.status == 'taken') {
           takenCount++;
-        } else if (slot.status == 'missed') {
-          missedCount++;
         } else if (slot.status == 'pending') {
           // Pick the earliest pending slot by time of day.
           if (nextPending == null ||
@@ -280,18 +277,19 @@ class _HomePageState extends State<HomePage> {
         }
       }
 
-      // Adherence only considers doses that are already *due* today (taken or
-      // missed). Slots whose scheduled time hasn't arrived yet are excluded so
-      // the percentage isn't dragged down by doses the user can't have taken
-      // yet. When nothing is due yet, adherence is a clean 100%.
-      final int dueCount = takenCount + missedCount;
+      // Adherence is the share of *all* of today's scheduled doses that have
+      // been taken. A dose that hasn't been marked taken yet — whether still
+      // pending or already missed — counts against the total, so the figure
+      // starts at 0% when a medicine is added and only rises once the user
+      // confirms "sudah diminum". With no doses scheduled at all it is 0%.
+      final int totalCount = slots.length;
 
       setState(() {
         _medicines = list;
         _nextPendingSlot = nextPending;
-        _adherencePercent = dueCount == 0
-            ? 100
-            : ((takenCount / dueCount) * 100).round();
+        _adherencePercent = totalCount == 0
+            ? 0
+            : ((takenCount / totalCount) * 100).round();
         _isLoading = false;
       });
     } catch (e) {
