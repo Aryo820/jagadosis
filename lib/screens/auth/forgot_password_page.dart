@@ -23,7 +23,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  /// Sends a Firebase password-reset email to the entered address.
+  /// Mengirim email reset kata sandi Firebase ke alamat email yang dimasukkan.
   Future<void> _sendResetEmail() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -99,7 +99,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       backgroundColor: AppColors.backgroundBlue,
       body: Stack(
         children: [
-          // Subtle top gradient background decoration
+          // Dekorasi latar belakang gradasi halus di bagian atas
           Positioned(
             top: 0,
             left: 0,
@@ -116,7 +116,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
           ),
 
-          // Main Content Area
+          // Area konten utama
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -127,7 +127,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Header Illustration Area
+                    // Area ilustrasi/header
                     const SizedBox(height: 40.0),
                     Container(
                       width: 80.0,
@@ -169,7 +169,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     const SizedBox(height: 32.0),
 
-                    // Forgot Password Card
+                    // Kartu formulir lupa kata sandi
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -258,7 +258,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                             const SizedBox(height: 24.0),
 
-                            // Send Instructions Button
+                            // Tombol kirim instruksi reset
                             SizedBox(
                               width: double.infinity,
                               height: 52.0,
@@ -313,7 +313,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     const SizedBox(height: 32.0),
 
-                    // Back to Login Link
+                    // Tautan kembali ke halaman login
                     TextButton(
                       onPressed: () {
                         Navigator.pop(context);

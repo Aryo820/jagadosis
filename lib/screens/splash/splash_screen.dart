@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 2000),
     );
 
-    // Logo scale: 0.0 -> 1.0 (with elastic out effect for premium feel)
+    // Skala logo: 0.0 -> 1.0 (dengan efek elastic out agar terasa lebih menarik)
     _logoScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Logo fade: 0.0 -> 1.0
+    // Efek muncul (fade) logo: 0.0 -> 1.0
     _logoFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Tagline fade
+    // Efek muncul (fade) untuk tagline
     _taglineFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -52,17 +52,18 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Start animation
+    // Mulai animasi
     _controller.forward();
 
-    // Navigate to Login Screen after 3 seconds
+    // Pindah ke layar berikutnya setelah beberapa detik
     _timer = Timer(const Duration(seconds: 4), _navigateToHome);
   }
 
   void _navigateToHome() {
     if (!mounted) return;
-    // Hand off routing to AuthGate, which decides between Dashboard and Login
-    // from the live Firebase Auth session rather than a local login flag.
+    // Serahkan pengaturan rute ke AuthGate, yang menentukan antara Dashboard
+    // atau Login berdasarkan sesi Firebase Auth yang aktif, bukan dari penanda
+    // login lokal.
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -93,14 +94,14 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF0F6BD7), // Lighter medical blue gradient top
-              Color(0xFF003D7C), // Darker deep medical blue bottom
+              Color(0xFF0F6BD7), // Biru medis lebih terang di bagian atas gradien
+              Color(0xFF003D7C), // Biru medis lebih gelap di bagian bawah gradien
             ],
           ),
         ),
         child: Stack(
           children: [
-            // Decorative background patterns/glows
+            // Pola/cahaya dekoratif pada latar belakang
             Positioned(
               top: -100,
               right: -100,
@@ -125,12 +126,12 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            // Center content
+            // Konten di tengah
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated Logo Container
+                  // Kontainer logo dengan animasi
                   AnimatedBuilder(
                     animation: _controller,
                     builder: (context, child) {
@@ -166,7 +167,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   const SizedBox(height: 24.0),
 
-                  // Animated Text (Title + Tagline)
+                  // Teks beranimasi (Judul + Tagline) — dinonaktifkan
                   // AnimatedBuilder(
                   //   animation: _controller,
                   //   builder: (context, child) {
@@ -194,7 +195,7 @@ class _SplashScreenState extends State<SplashScreen>
                   //   ),
                   // ),
 
-                  // Animated Tagline
+                  // Tagline beranimasi
                   AnimatedBuilder(
                     animation: _controller,
                     builder: (context, child) {
@@ -218,7 +219,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // Bottom loading/branding indicator
+            // Indikator loading/branding di bagian bawah
             Positioned(
               bottom: 48.0,
               left: 0,

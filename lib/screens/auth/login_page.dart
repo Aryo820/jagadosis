@@ -38,24 +38,24 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final user = await _authService.login(email: email, password: password);
 
-      // Prefer the display name set at registration; fall back to the email
-      // local-part so the greeting never shows an empty name.
+      // Gunakan nama tampilan yang diatur saat registrasi; jika kosong, pakai
+      // bagian email sebelum tanda @ agar sapaan tidak pernah menampilkan nama kosong.
       final displayName = user.displayName?.trim();
       final name = (displayName != null && displayName.isNotEmpty)
           ? displayName
           : email.split('@').first;
       await PreferenceHandler.saveUser(name, user.email ?? email);
 
-      // Refresh the local cache from Firestore (name + medical details entered
-      // on another device). Best-effort: a sync hiccup must not block login —
-      // the baseline saved above still stands.
+      // Segarkan cache lokal dari Firestore (nama + data medis yang mungkin
+      // diisi di perangkat lain). Sifatnya best-effort: gangguan sinkronisasi
+      // tidak boleh menghalangi login — data dasar yang disimpan di atas tetap dipakai.
       try {
         await _profileService.pullIntoCache();
       } catch (_) {}
 
-      // Reschedule reminders for this device from the user's Firestore
-      // medicines (e.g. first login on a new phone). Fire-and-forget so it
-      // doesn't delay reaching the dashboard.
+      // Jadwalkan ulang pengingat untuk perangkat ini berdasarkan daftar obat
+      // pengguna di Firestore (misalnya saat login pertama di HP baru). Dijalankan
+      // tanpa ditunggu agar tidak memperlambat perpindahan ke dashboard.
       unawaited(NotificationService().rescheduleAll());
 
       if (!mounted) return;
@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: AppColors.backgroundBlue,
       body: Stack(
         children: [
-          // Subtle top gradient background decoration
+          // Dekorasi latar belakang gradasi halus di bagian atas
           Positioned(
             top: 0,
             left: 0,
@@ -105,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          // Main Content Area
+          // Area konten utama
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -128,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 32.0),
 
-                    // Login Card
+                    // Kartu formulir login
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -177,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 24.0),
 
-                            // Email Field
+                            // Kolom email
                             Text(
                               'Email',
                               style: GoogleFonts.inter(
@@ -244,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 16.0),
 
-                            // Password Field
+                            // Kolom kata sandi
                             Text(
                               'Kata Sandi',
                               style: GoogleFonts.inter(
@@ -323,7 +323,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 8.0),
 
-                            // Forgot Password Link
+                            // Tautan lupa kata sandi
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
@@ -354,7 +354,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 24.0),
 
-                            // Actions
+                            // Tombol aksi (Masuk & Daftar)
                             SizedBox(
                               width: double.infinity,
                               height: 52.0,

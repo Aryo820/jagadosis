@@ -25,7 +25,7 @@ class _MedsPageState extends State<MedsPage> {
     _loadMedicines();
   }
 
-  /// Fetches all active medicines from the database.
+  /// Mengambil semua obat aktif dari database.
   Future<void> _loadMedicines() async {
     setState(() {
       _isLoading = true;
@@ -43,9 +43,9 @@ class _MedsPageState extends State<MedsPage> {
     }
   }
 
-  /// Deletes a medicine by ID, cancels its notifications, and reloads the list.
+  /// Menghapus obat berdasarkan ID, membatalkan notifikasinya, lalu memuat ulang daftar.
   Future<void> _deleteMedicine(String id) async {
-    // Cancel scheduled notifications before removing from DB
+    // Batalkan notifikasi terjadwal sebelum menghapus dari database
     await NotificationService().cancelForMedicine(id);
     await _medicineRepo.deleteMedicine(id);
     _loadMedicines();
@@ -60,7 +60,7 @@ class _MedsPageState extends State<MedsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section Title
+            // Judul bagian
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -115,7 +115,7 @@ class _MedsPageState extends State<MedsPage> {
                 final relation = isOldFormat ? parts[2] : (parts.length > 1 ? parts[1] : '');
                 final frequency = isOldFormat ? parts[3] : (parts.length > 2 ? parts[2] : '');
 
-                // Map form or dosage text to appropriate icon and color
+                // Petakan teks bentuk atau dosis ke ikon dan warna yang sesuai
                 IconData icon = Icons.medication_rounded;
                 Color color = AppColors.medicalBlue;
 
@@ -179,7 +179,7 @@ class _MedsPageState extends State<MedsPage> {
     );
   }
 
-  /// Premium empty state when there are no medicines registered.
+  /// Tampilan kosong yang rapi ketika belum ada obat yang terdaftar.
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -226,7 +226,7 @@ class _MedsPageState extends State<MedsPage> {
     );
   }
 
-  /// Builds a dynamic medication card with a context-based delete menu.
+  /// Membangun kartu obat dinamis lengkap dengan menu hapus lewat tombol opsi.
   Widget _buildMedCard(
     BuildContext context,
     String name,
@@ -357,7 +357,7 @@ class _MedsPageState extends State<MedsPage> {
                               ),
                               onTap: () {
                                 Navigator.pop(context);
-                                // Show confirmation alert dialog
+                                // Tampilkan dialog konfirmasi
                                 showDialog(
                                   context: context,
                                   builder: (BuildContext context) {

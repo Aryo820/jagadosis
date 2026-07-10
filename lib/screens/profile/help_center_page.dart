@@ -29,7 +29,7 @@ class HelpCenterPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Card
+            // Kartu header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20.0),
@@ -114,7 +114,7 @@ class HelpCenterPage extends StatelessWidget {
             ),
             const SizedBox(height: 32.0),
             
-            // Footer Version
+            // Versi aplikasi di bagian bawah
             Center(
               child: Text(
                 'JagaDosis v1.0.0 • Offline-First Medication Companion',

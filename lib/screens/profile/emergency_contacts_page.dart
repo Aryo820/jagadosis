@@ -86,7 +86,7 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
         throw 'Tidak dapat melakukan panggilan';
       }
     } catch (e) {
-      // Fallback: Copy to clipboard and notify
+      // Cadangan: salin nomor ke papan klip dan beri tahu pengguna
       await Clipboard.setData(ClipboardData(text: phoneNumber));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -317,7 +317,7 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
   }
 
   Widget _buildContactCard(EmergencyContact contact) {
-    // Generate color based on relationship
+    // Tentukan warna berdasarkan jenis hubungan kontak
     final isMedical = contact.relation.toLowerCase().contains('dok') || 
                       contact.relation.toLowerCase().contains('rs') || 
                       contact.relation.toLowerCase().contains('sakit');
@@ -340,7 +340,7 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Avatar Initial
+            // Inisial avatar (huruf pertama nama)
             Container(
               width: 48,
               height: 48,
@@ -360,7 +360,7 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
               ),
             ),
             const SizedBox(width: 14),
-            // Details
+            // Detail kontak
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +379,7 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Badge
+                      // Label/badge hubungan
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
@@ -408,17 +408,17 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                 ],
               ),
             ),
-            // Actions
+            // Tombol aksi
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Call
+                // Tombol panggil
                 IconButton(
                   onPressed: () => _callNumber(contact.phone),
                   icon: const Icon(Icons.phone_in_talk_rounded, color: AppColors.medicalBlue),
                   tooltip: 'Hubungi',
                 ),
-                // Menu (Edit/Delete)
+                // Menu (Ubah/Hapus)
                 PopupMenuButton<String>(
                   color: AppColors.surfaceWhite,
                   icon: const Icon(Icons.more_vert_rounded, color: AppColors.textGrey),

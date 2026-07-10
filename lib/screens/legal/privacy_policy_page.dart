@@ -2,15 +2,17 @@ import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// The version of the privacy policy currently shown to users. Bump this
-/// whenever the policy text below changes materially — the value is recorded
-/// against each account at registration (see [ProfileService.createInitial]),
-/// so a change here lets us tell who agreed to which version.
+/// Versi kebijakan privasi yang saat ini ditampilkan kepada pengguna. Naikkan
+/// nilai ini setiap kali teks kebijakan di bawah berubah secara signifikan —
+/// nilainya dicatat pada tiap akun saat registrasi (lihat
+/// [ProfileService.createInitial]), sehingga perubahan di sini memungkinkan kita
+/// mengetahui siapa yang menyetujui versi yang mana.
 const String privacyPolicyVersion = '1.0';
 
-/// A read-only, in-app rendering of JagaDosis' privacy policy. Opened from the
-/// consent checkbox on the registration screen. The copy below is a starting
-/// point meant to be reviewed/replaced by the real legal text.
+/// Tampilan kebijakan privasi JagaDosis di dalam aplikasi yang bersifat
+/// baca-saja. Dibuka dari kotak centang persetujuan pada layar registrasi. Teks
+/// di bawah hanyalah titik awal yang dimaksudkan untuk ditinjau/diganti dengan
+/// teks hukum yang sebenarnya.
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
 

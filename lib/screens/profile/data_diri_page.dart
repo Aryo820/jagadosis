@@ -85,8 +85,8 @@ class _DataDiriPageState extends State<DataDiriPage> {
 
     setState(() => _isSaving = true);
 
-    // Persist to Firestore (durable, cross-device) and the local cache in one
-    // call. Email stays read-only, so it's carried over unchanged.
+    // Simpan ke Firestore (permanen, lintas perangkat) sekaligus ke cache lokal
+    // dalam satu pemanggilan. Email bersifat baca-saja, jadi dibawa apa adanya.
     final profile = UserProfile(
       name: _nameController.text.trim(),
       email: PreferenceHandler.userEmail,
@@ -112,7 +112,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
           ),
         ),
       );
-      Navigator.pop(context, true); // Return true so profile page rebuilds name
+      Navigator.pop(context, true); // Kembalikan true agar halaman profil memperbarui nama
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,7 +200,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
                       },
                     ),
                     const SizedBox(height: 16.0),
-                    // Email (Read Only)
+                    // Email (hanya baca / tidak bisa diubah)
                     TextFormField(
                       initialValue: PreferenceHandler.userEmail,
                       enabled: false,
@@ -312,7 +312,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
                 ),
               ),
               const SizedBox(height: 32.0),
-              // Simpan Button
+              // Tombol simpan
               SizedBox(
                 width: double.infinity,
                 height: 52.0,

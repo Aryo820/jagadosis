@@ -4,17 +4,18 @@ class MedicineModel {
   final String dose;
   final String scheduleTime;
 
-  /// Per-slot consumption status, stored comma-separated and kept parallel to
-  /// [scheduleTime]. For a medicine taken twice a day the value looks like
-  /// "taken, pending" — one token per scheduled time. Legacy rows that store a
-  /// single token (e.g. "pending") are still read correctly via [slotStatuses].
+  /// Status konsumsi untuk tiap slot waktu, disimpan dipisah koma dan sejajar
+  /// dengan [scheduleTime]. Untuk obat yang diminum dua kali sehari nilainya
+  /// seperti "taken, pending" — satu token untuk tiap jadwal. Data lama yang
+  /// hanya menyimpan satu token (misal "pending") tetap terbaca benar lewat
+  /// [slotStatuses].
   final String status;
   final String statusDate;
   final bool enableNotification;
 
-  /// When this medicine was first added. Used so a dose slot whose time had
-  /// already passed *before* the medicine existed is not instantly marked as
-  /// 'missed' — instead it starts from its next occurrence.
+  /// Waktu obat ini pertama kali ditambahkan. Dipakai agar slot dosis yang
+  /// jamnya sudah lewat *sebelum* obat dibuat tidak langsung ditandai 'missed'
+  /// (terlewat) — melainkan dihitung mulai dari jadwal berikutnya.
   final DateTime createdAt;
 
   MedicineModel({
@@ -28,7 +29,7 @@ class MedicineModel {
     required this.createdAt,
   });
 
-  /// Individual scheduled times, e.g. ["08:00", "20:00"].
+  /// Daftar jam jadwal satu per satu, misal ["08:00", "20:00"].
   List<String> get scheduleTimes => scheduleTime
       .split(',')
       .map((s) => s.trim())
@@ -42,13 +43,13 @@ class MedicineModel {
         .first;
   }
 
-  /// Status of each scheduled time, parallel to [scheduleTimes].
+  /// Status untuk tiap jam jadwal, sejajar dengan [scheduleTimes].
   ///
-  /// Normalises the stored [status] string so its length always matches the
-  /// number of scheduled times:
-  ///   * a single legacy token (e.g. "pending") is applied to every slot,
-  ///   * a shorter list is padded with 'pending',
-  ///   * a longer list is truncated.
+  /// Menormalkan string [status] yang tersimpan agar jumlahnya selalu sama
+  /// dengan jumlah jam jadwal:
+  ///   * satu token lama (misal "pending") diterapkan ke semua slot,
+  ///   * daftar yang lebih pendek ditambahi 'pending',
+  ///   * daftar yang lebih panjang dipotong.
   List<String> get slotStatuses {
     final times = scheduleTimes;
     final slotCount = times.isEmpty ? 1 : times.length;
@@ -62,7 +63,7 @@ class MedicineModel {
     if (raw.isEmpty) {
       return List.filled(slotCount, 'pending');
     }
-    // Legacy single value → apply to all slots.
+    // Nilai lama yang cuma satu → terapkan ke semua slot.
     if (raw.length == 1 && slotCount > 1) {
       return List.filled(slotCount, raw.first);
     }
@@ -75,13 +76,13 @@ class MedicineModel {
     return raw;
   }
 
-  /// Whether at least one scheduled time is still pending.
+  /// Bernilai true jika masih ada minimal satu jadwal yang berstatus pending.
   bool get hasPendingSlot => slotStatuses.any((s) => s == 'pending');
 
-  /// True when every scheduled time has been marked as taken.
+  /// Bernilai true jika semua jadwal sudah ditandai taken (sudah diminum).
   bool get isFullyTaken => slotStatuses.every((s) => s == 'taken');
 
-  /// Builds the comma-separated [status] value from a list of slot statuses.
+  /// Menyusun nilai [status] yang dipisah koma dari daftar status tiap slot.
   static String joinStatuses(List<String> statuses) => statuses.join(', ');
 
   bool get isStatusForToday => statusDate == dateKey(DateTime.now());
@@ -94,8 +95,8 @@ class MedicineModel {
     );
   }
 
-  /// Returns a copy with the status of the slot at [index] changed to
-  /// [newStatus], leaving all other slots untouched.
+  /// Mengembalikan salinan objek dengan status slot pada [index] diubah menjadi
+  /// [newStatus], sedangkan slot lainnya tetap tidak berubah.
   MedicineModel copyWithSlotStatus(int index, String newStatus) {
     final statuses = slotStatuses;
     if (index < 0 || index >= statuses.length) return this;
@@ -132,8 +133,8 @@ class MedicineModel {
           ? map['statusDate']
           : dateKey(DateTime.fromMillisecondsSinceEpoch(0)),
       enableNotification: (map['enableNotification'] ?? 1) == 1,
-      // Legacy rows without a createdAt are treated as created long ago so they
-      // keep their normal 'missed' behaviour.
+      // Data lama tanpa createdAt dianggap dibuat sejak lama, supaya perilaku
+      // 'missed' (terlewat) tetap berjalan normal.
       createdAt: (map['createdAt'] != null &&
               (map['createdAt'] as String).isNotEmpty)
           ? DateTime.parse(map['createdAt'])

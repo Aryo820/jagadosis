@@ -4,13 +4,13 @@ import 'package:aplikasi/models/medicine_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Repository managing medicine data in Cloud Firestore, scoped to the
-/// signed-in user at `users/{uid}/medicines/{id}`.
+/// Repository yang mengelola data obat di Cloud Firestore, dibatasi per
+/// pengguna yang sedang login pada `users/{uid}/medicines/{id}`.
 ///
-/// The public interface matches the previous SQLite-backed version so the UI
-/// layers are unchanged. Firestore's offline persistence keeps reads working
-/// without a connection; writes are applied to the local cache immediately and
-/// synced when the device reconnects.
+/// Antarmuka publiknya sama dengan versi lama yang memakai SQLite, sehingga
+/// lapisan UI tidak perlu diubah. Fitur offline Firestore membuat operasi baca
+/// tetap jalan tanpa koneksi; operasi tulis langsung diterapkan ke cache lokal
+/// dan disinkronkan saat perangkat kembali online.
 class MedicineRepository {
   MedicineRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
     : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -19,22 +19,22 @@ class MedicineRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  /// The current user's `medicines` sub-collection, or null when signed out.
+  /// Sub-koleksi `medicines` milik pengguna saat ini, atau null jika belum login.
   CollectionReference<Map<String, dynamic>>? get _col {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
     return _firestore.collection('users').doc(uid).collection('medicines');
   }
 
-  /// Adds a new medicine, keyed by its app-generated [MedicineModel.id].
+  /// Menambahkan obat baru, dengan kunci berupa [MedicineModel.id] yang dibuat aplikasi.
   Future<void> addMedicine(MedicineModel medicine) async {
     final col = _col;
     if (col == null) return;
     await _commit(col.doc(medicine.id).set(medicine.toMap()));
   }
 
-  /// Retrieves all of the current user's medicines. Served from the offline
-  /// cache when there's no connection. Returns empty when signed out.
+  /// Mengambil semua obat milik pengguna saat ini. Dilayani dari cache offline
+  /// saat tidak ada koneksi. Mengembalikan list kosong jika belum login.
   Future<List<MedicineModel>> getAllMedicines() async {
     final col = _col;
     if (col == null) return [];
@@ -44,7 +44,7 @@ class MedicineRepository {
         .toList();
   }
 
-  /// Updates an existing medicine (merge write, keyed by its id).
+  /// Memperbarui obat yang sudah ada (tulis merge, dengan kunci berupa id-nya).
   Future<void> updateMedicine(MedicineModel medicine) async {
     final col = _col;
     if (col == null) return;
@@ -53,24 +53,26 @@ class MedicineRepository {
     );
   }
 
-  /// Deletes a medicine by its id.
+  /// Menghapus obat berdasarkan id-nya.
   Future<void> deleteMedicine(String id) async {
     final col = _col;
     if (col == null) return;
     await _commit(col.doc(id).delete());
   }
 
-  /// Awaits a write but never longer than a few seconds: with offline
-  /// persistence the write Future only resolves once the server acknowledges,
-  /// which never happens while offline. The local cache mutation is already
-  /// applied synchronously, so timing out here lets the UI proceed and read
-  /// its own write back from the cache; Firestore syncs the write on reconnect.
+  /// Menunggu operasi tulis, tapi tidak pernah lebih dari beberapa detik: dengan
+  /// fitur offline, Future tulis baru selesai setelah server memberi konfirmasi,
+  /// yang tidak akan terjadi saat offline. Perubahan pada cache lokal sudah
+  /// diterapkan secara sinkron, jadi timeout di sini membuat UI bisa lanjut dan
+  /// membaca kembali hasil tulisannya dari cache; Firestore akan menyinkronkan
+  /// tulisan tersebut saat kembali online.
   Future<void> _commit(Future<void> write) {
     return write.timeout(
       const Duration(seconds: 3),
-      // Expected while offline: the local cache mutation already applied, so the
-      // UI can proceed and Firestore syncs on reconnect. Logged (not swallowed)
-      // so a persistent stall is visible during debugging.
+      // Wajar terjadi saat offline: perubahan cache lokal sudah diterapkan, jadi
+      // UI bisa lanjut dan Firestore menyinkronkan saat kembali online. Tetap
+      // dicatat (bukan diabaikan) agar kemacetan yang terus-menerus terlihat
+      // saat debugging.
       onTimeout: () => log(
         'MedicineRepository: write not acknowledged within 3s (offline?); '
         'applied locally, will sync on reconnect',

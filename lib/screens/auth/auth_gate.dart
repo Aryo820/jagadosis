@@ -7,13 +7,14 @@ import 'package:aplikasi/utils/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-/// Routes between the authenticated and unauthenticated parts of the app based
-/// on Firebase Auth as the single source of truth.
+/// Mengarahkan pengguna antara bagian aplikasi yang sudah login dan yang belum,
+/// dengan Firebase Auth sebagai satu-satunya sumber kebenaran status login.
 ///
-/// Listening to [FirebaseAuth.authStateChanges] means a persisted session is
-/// honoured on cold start and any sign-out (from anywhere) reactively falls
-/// back to [LoginPage] — no more relying on a separately-tracked SharedPreferences
-/// login flag that could drift out of sync with the actual Firebase session.
+/// Dengan mendengarkan [FirebaseAuth.authStateChanges], sesi yang tersimpan akan
+/// dihormati saat aplikasi dibuka dari kondisi mati, dan setiap logout (dari mana
+/// pun) secara reaktif mengembalikan pengguna ke [LoginPage] — tanpa perlu lagi
+/// bergantung pada penanda login terpisah di SharedPreferences yang bisa tidak
+/// sinkron dengan sesi Firebase yang sebenarnya.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -22,16 +23,17 @@ class AuthGate extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Still restoring the persisted session — show a brief loader.
+        // Masih memulihkan sesi yang tersimpan — tampilkan loader sebentar.
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _AuthLoading();
         }
 
         final user = snapshot.data;
         if (user != null) {
-          // Keep the local display cache (name/email) in sync so the greeting
-          // and profile never render blank when a session is restored without a
-          // fresh login (e.g. app relaunch). No-op once the cache is populated.
+          // Jaga agar cache tampilan lokal (nama/email) tetap sinkron, sehingga
+          // sapaan dan profil tidak pernah tampil kosong ketika sesi dipulihkan
+          // tanpa login ulang (misalnya saat aplikasi dibuka kembali). Tidak
+          // melakukan apa-apa jika cache sudah terisi.
           _syncProfileCache(user);
           return const DashboardPage();
         }
@@ -41,8 +43,9 @@ class AuthGate extends StatelessWidget {
     );
   }
 
-  /// Backfills the SharedPreferences display cache from the Firebase user when
-  /// it hasn't been populated yet (login already saves it explicitly).
+  /// Mengisi cache tampilan di SharedPreferences dari data pengguna Firebase
+  /// jika cache tersebut belum terisi (saat login, data ini sudah disimpan
+  /// secara eksplisit).
   void _syncProfileCache(User user) {
     if (PreferenceHandler.userName.isNotEmpty) return;
 

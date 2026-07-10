@@ -6,17 +6,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Unified form page for both creating and editing a medicine.
+/// Halaman form serbaguna untuk menambah maupun mengubah data obat.
 ///
-/// Pass [medicine] to open in **edit** mode (fields are pre-filled and saving
-/// updates the existing record). Leave it null to open in **add** mode.
+/// Isi [medicine] untuk membuka dalam mode **ubah** (kolom terisi otomatis dan
+/// saat disimpan akan memperbarui data yang sudah ada). Biarkan null untuk
+/// membuka dalam mode **tambah**.
 class MedicineFormPage extends StatefulWidget {
-  /// The medicine to edit. When null, the form operates in "add" mode.
+  /// Obat yang akan diubah. Jika null, form berjalan dalam mode "tambah".
   final MedicineModel? medicine;
 
   const MedicineFormPage({super.key, this.medicine});
 
-  /// Whether the form is editing an existing medicine.
+  /// Menandakan apakah form sedang mengubah obat yang sudah ada.
   bool get isEditing => medicine != null;
 
   @override
@@ -35,7 +36,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   /// indikator loading supaya user tidak menekan simpan berkali-kali.
   bool _isSaving = false;
 
-  // Selections
+  // Pilihan-pilihan yang dipilih user
   String _selectedDosageUnit = 'Tablet';
   String _selectedFrequency = '1x Sehari';
   String _selectedFoodRelation = 'Sesudah Makan';
@@ -80,13 +81,13 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     super.dispose();
   }
 
-  /// Pre-fills the form fields from an existing medicine when editing.
+  /// Mengisi kolom-kolom form dari data obat yang sudah ada saat mode ubah.
   void _populateFromMedicine(MedicineModel med) {
     _nameController.text = med.medicineName;
 
-    // Parse dose string. Supports two historical formats:
-    //   Old: "500 mg • Tablet • Sesudah Makan • 1x Sehari" (4 parts)
-    //   New: "500 Tablet • Sesudah Makan • 1x Sehari"      (3 parts)
+    // Uraikan teks dosis. Mendukung dua format lama:
+    //   Lama: "500 mg • Tablet • Sesudah Makan • 1x Sehari" (4 bagian)
+    //   Baru: "500 Tablet • Sesudah Makan • 1x Sehari"      (3 bagian)
     final parts = med.dose.split(' • ');
     if (parts.length >= 4) {
       _applyDoseParts(
@@ -101,16 +102,16 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         frequency: parts[2].trim(),
       );
     } else {
-      // Unknown format: keep the raw value in the dosage field.
+      // Format tidak dikenali: simpan nilai apa adanya di kolom dosis.
       _dosageValueController.text = med.dose;
     }
 
-    // Parse scheduleTime: e.g. "08:00, 20:00"
+    // Uraikan scheduleTime, misalnya "08:00, 20:00"
     _selectedTimes = _parseScheduleTimes(med.scheduleTime);
   }
 
-  /// Applies parsed dose components to the form state, registering any
-  /// non-standard values so the dropdowns/chips can still display them.
+  /// Menerapkan komponen dosis yang sudah diuraikan ke state form, sekaligus
+  /// mendaftarkan nilai non-standar agar tetap bisa tampil di dropdown/chip.
   void _applyDoseParts({
     required String dosageAndUnit,
     required String relation,
@@ -139,8 +140,8 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     _selectedFrequency = frequency;
   }
 
-  /// Parses a comma-separated "HH:mm" schedule string into TimeOfDay values.
-  /// Falls back to a single 08:00 entry when nothing valid is found.
+  /// Menguraikan string jadwal "HH:mm" yang dipisah koma menjadi nilai TimeOfDay.
+  /// Jika tidak ada yang valid, dipakai satu waktu default 08:00.
   List<TimeOfDay> _parseScheduleTimes(String scheduleTime) {
     final result = <TimeOfDay>[];
     for (final tStr in scheduleTime.split(',')) {
@@ -159,7 +160,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     return result;
   }
 
-  /// Adjusts the number of time pickers to match the selected frequency.
+  /// Menyesuaikan jumlah pemilih waktu (time picker) dengan frekuensi terpilih.
   void _updateTimePickersCount(String frequency) {
     int count = 1;
     if (frequency == '2x Sehari') {
@@ -187,12 +188,12 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     }
   }
 
-  /// Validates, persists (insert or update), and (re)schedules notifications.
+  /// Memvalidasi, menyimpan (tambah atau perbarui), lalu menjadwalkan ulang notifikasi.
   void _saveMedication() async {
     if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
 
-    // Sort times chronologically.
+    // Urutkan waktu dari yang paling awal ke paling akhir.
     final sortedTimes = List<TimeOfDay>.from(_selectedTimes)
       ..sort((a, b) {
         final aMinutes = a.hour * 60 + a.minute;
@@ -206,23 +207,24 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         })
         .join(', ');
 
-    // Combine dose, unit, relation and frequency for comprehensive UI display.
+    // Gabungkan dosis, satuan, hubungan makan, dan frekuensi untuk ditampilkan di UI.
     final String doseDescription =
         '${_dosageValueController.text} $_selectedDosageUnit • $_selectedFoodRelation • $_selectedFrequency';
 
     final existing = widget.medicine;
     final today = MedicineModel.dateKey(DateTime.now());
 
-    // Build a per-slot status string (one token per scheduled time). When
-    // editing, keep the previous slot statuses by position; any newly added
-    // slot defaults to 'pending'. New medicines start fully 'pending'.
+    // Bangun string status per slot (satu token untuk tiap waktu jadwal). Saat
+    // mode ubah, status slot sebelumnya dipertahankan; slot baru yang ditambahkan
+    // otomatis berstatus 'pending'. Obat baru seluruhnya dimulai 'pending'.
     final int slotCount = sortedTimes.length;
     final List<String> slotStatuses;
     if (existing != null && existing.statusDate == today) {
-      // Preserve prior slot statuses by matching the time-of-day, not the list
-      // position. The user may have changed a time this session (which re-sorts
-      // the slots), and a position-based copy would attach e.g. a 'taken' mark
-      // to the wrong dose. A brand-new time falls back to 'pending'.
+      // Pertahankan status slot lama dengan mencocokkan waktu (jam-menit), bukan
+      // urutan di list. User bisa saja mengubah salah satu waktu di sesi ini
+      // (yang membuat slot diurutkan ulang), sehingga penyalinan berbasis urutan
+      // bisa menempelkan tanda mis. 'taken' ke dosis yang salah. Waktu yang
+      // benar-benar baru kembali ke status 'pending'.
       final prevTimes = existing.scheduleTimes;
       final prevStatuses = existing.slotStatuses;
       final statusByTime = <String, String>{
@@ -329,7 +331,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     );
   }
 
-  /// Shows the success bottom sheet, with copy adapted to add/edit mode.
+  /// Menampilkan bottom sheet sukses, dengan teks yang menyesuaikan mode tambah/ubah.
   void _showSuccessSheet() {
     final String title = widget.isEditing
         ? 'Obat Berhasil Diperbarui'
@@ -395,11 +397,11 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                 height: 52.0,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // Close bottom sheet
+                    Navigator.pop(context); // Tutup bottom sheet
                     Navigator.pop(
                       context,
                       true,
-                    ); // Back to list with reload flag
+                    ); // Kembali ke daftar dengan penanda untuk memuat ulang
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _selectedColor,
@@ -457,13 +459,13 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Section 1: Informasi Dasar
+                // Bagian 1: Informasi Dasar
                 _buildSectionHeader('Informasi Dasar'),
                 const SizedBox(height: 12.0),
                 _buildCard(child: _buildBasicInfoSection()),
                 const SizedBox(height: 24.0),
 
-                // Section 2: Aturan Pakai & Waktu
+                // Bagian 2: Aturan Pakai & Waktu
                 _buildSectionHeader('Aturan Pakai & Waktu'),
                 const SizedBox(height: 12.0),
                 _buildCard(child: _buildScheduleSection()),
@@ -481,7 +483,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // Section builders
+  // Pembangun bagian-bagian (section)
   // ---------------------------------------------------------------------------
 
   Widget _buildBasicInfoSection() {
@@ -732,7 +734,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // Reusable helper widgets
+  // Widget bantu yang bisa dipakai ulang
   // ---------------------------------------------------------------------------
 
   Widget _buildSectionHeader(String title) {
@@ -780,7 +782,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     );
   }
 
-  /// Reusable styled dropdown used for both the unit and frequency selectors.
+  /// Dropdown bergaya yang dipakai ulang untuk pemilih satuan maupun frekuensi.
   Widget _buildDropdown({
     required String value,
     required List<String> items,

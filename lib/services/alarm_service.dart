@@ -8,40 +8,41 @@ import 'package:aplikasi/repositories/medicine_repository.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-/// Singleton managing the *ringing* medication alarm that fires exactly at the
-/// scheduled dose time (jam H), on top of the 30/15-minute heads-up reminders
-/// handled by NotificationService.
+/// Singleton yang mengatur alarm obat yang *berbunyi* tepat pada waktu dosis
+/// terjadwal (jam H), sebagai pelengkap pengingat awal 30/15 menit yang ditangani
+/// oleh NotificationService.
 ///
-/// Unlike flutter_local_notifications, the `alarm` package schedules one-shot
-/// alarms at a concrete [DateTime] — there is no daily-repeat flag. Daily
-/// recurrence is therefore emulated:
-///   * [scheduleForMedicine] sets the next upcoming occurrence of each time,
-///   * after a dose is confirmed from the ring screen it re-arms that medicine
-///     via [scheduleForMedicine] (next occurrence = tomorrow),
-///   * [rescheduleAll] also runs at startup and on app resume as a safety net.
+/// Berbeda dari flutter_local_notifications, paket `alarm` menjadwalkan alarm
+/// sekali-jalan (one-shot) pada [DateTime] yang konkret — tidak ada flag ulang
+/// harian. Karena itu pengulangan harian ditiru (emulasi) dengan cara:
+///   * [scheduleForMedicine] menetapkan kemunculan terdekat berikutnya dari tiap waktu,
+///   * setelah dosis dikonfirmasi dari layar alarm, obat itu diaktifkan ulang
+///     lewat [scheduleForMedicine] (kemunculan berikutnya = besok),
+///   * [rescheduleAll] juga berjalan saat aplikasi dimulai dan saat aplikasi
+///     kembali aktif, sebagai jaring pengaman.
 class AlarmService {
   static final AlarmService _instance = AlarmService._internal();
   factory AlarmService() => _instance;
   AlarmService._internal();
 
-  /// Subdirectory (relative to the app Documents dir) where ringtones picked
-  /// from device storage are copied. The alarm plugin accepts this same
-  /// Documents-relative path, so it doubles as the stored [PreferenceHandler]
-  /// value for user-picked sounds.
+  /// Subdirektori (relatif terhadap folder Documents aplikasi) tempat nada dering
+  /// yang dipilih dari penyimpanan perangkat disalin. Plugin alarm menerima jalur
+  /// relatif-Documents yang sama ini, jadi nilainya sekaligus dipakai sebagai
+  /// nilai [PreferenceHandler] yang disimpan untuk suara pilihan pengguna.
   static const String customSoundDir = 'alarm_sounds';
 
-  /// Mirrors NotificationService: bounds the id encoding and the cancel sweep so
-  /// reducing a medicine's frequency still clears its old alarms.
+  /// Meniru NotificationService: membatasi penyusunan id dan proses pembersihan
+  /// (cancel) agar mengurangi frekuensi obat tetap membersihkan alarm lamanya.
   static const int _maxScheduleTimes = 8;
 
-  /// Initializes the alarm plugin. Must be called once before scheduling.
+  /// Menginisialisasi plugin alarm. Harus dipanggil sekali sebelum penjadwalan.
   Future<void> init() async {
     await Alarm.init();
   }
 
-  /// Schedules a ringing alarm at each dose time for a single medicine.
-  /// Honours both the per-medicine switch and the global reminder toggle, so
-  /// this is the single choke point for alarm scheduling.
+  /// Menjadwalkan alarm berbunyi pada setiap waktu dosis untuk satu obat.
+  /// Menghormati sakelar per-obat maupun sakelar pengingat global, jadi ini
+  /// adalah satu-satunya titik utama penjadwalan alarm.
   Future<void> scheduleForMedicine(MedicineModel medicine) async {
     if (!medicine.enableNotification) return;
     if (!PreferenceHandler.notificationGlobal) return;
@@ -78,9 +79,9 @@ class AlarmService {
     }
   }
 
-  /// Builds the AlarmSettings for a dose. The medicine name and time are carried
-  /// in the notification body so the ring screen can display them from the
-  /// AlarmSettings it receives.
+  /// Membangun AlarmSettings untuk satu dosis. Nama obat dan waktunya dibawa di
+  /// dalam isi notifikasi agar layar alarm bisa menampilkannya dari AlarmSettings
+  /// yang diterimanya.
   AlarmSettings _buildSettings({
     required int id,
     required DateTime when,
@@ -93,12 +94,13 @@ class AlarmService {
     return AlarmSettings(
       id: id,
       dateTime: when,
-      // A bundled asset (`assets/...`) or a Documents-relative custom sound
-      // (`alarm_sounds/...`); the alarm plugin accepts either form directly.
+      // Aset bawaan (`assets/...`) atau suara kustom relatif-Documents
+      // (`alarm_sounds/...`); plugin alarm menerima kedua bentuk ini langsung.
       assetAudioPath: PreferenceHandler.alarmSound,
       loopAudio: true,
       vibrate: vibrationOn,
-      // Sound off → keep it silent (vibrate-only), otherwise fade up to full.
+      // Suara mati → jaga tetap senyap (hanya getar), selain itu naik perlahan
+      // (fade) hingga volume penuh.
       volumeSettings: VolumeSettings.fade(
         volume: soundOn ? 1.0 : 0.0,
         fadeDuration: const Duration(seconds: 3),
@@ -114,9 +116,10 @@ class AlarmService {
     );
   }
 
-  /// Rebuilds an existing alarm's settings with a new fire time, preserving its
-  /// id, sound, and notification payload. Reconstructs via the constructor
-  /// rather than copyWith so it doesn't depend on that method existing.
+  /// Membangun ulang pengaturan alarm yang sudah ada dengan waktu bunyi baru,
+  /// sambil mempertahankan id, suara, dan payload notifikasinya. Dibangun ulang
+  /// lewat constructor, bukan copyWith, agar tidak bergantung pada keberadaan
+  /// metode tersebut.
   AlarmSettings _withDateTime(AlarmSettings from, DateTime when) {
     return AlarmSettings(
       id: from.id,
@@ -131,12 +134,12 @@ class AlarmService {
     );
   }
 
-  /// Re-arms a ringing alarm [delay] from now, reusing its id and payload.
-  /// Used by the ring screen's Snooze button.
+  /// Mengaktifkan ulang alarm berbunyi [delay] dari sekarang, dengan memakai
+  /// kembali id dan payload-nya. Dipakai oleh tombol Tunda (Snooze) di layar alarm.
   Future<void> snooze(AlarmSettings from, Duration delay) async {
     final next = DateTime.now().add(delay);
     try {
-      // Silence the current ring before re-arming the same slot.
+      // Hentikan bunyi yang sedang berlangsung sebelum mengaktifkan ulang slot yang sama.
       await Alarm.stop(from.id);
       await Alarm.set(alarmSettings: _withDateTime(from, next));
       log('AlarmService: Snoozed alarm id=${from.id} until $next');
@@ -145,9 +148,9 @@ class AlarmService {
     }
   }
 
-  /// Cancels every alarm slot for a medicine. Sweeps the full slot range — not
-  /// the medicine's current time count — so a medicine edited down to fewer
-  /// times still has its old alarms cleared.
+  /// Membatalkan setiap slot alarm untuk sebuah obat. Menyapu seluruh rentang
+  /// slot — bukan jumlah waktu obat saat ini — agar obat yang diedit menjadi
+  /// lebih sedikit waktunya tetap terbersihkan alarm lamanya.
   Future<void> cancelForMedicine(String medicineId) async {
     for (int timeIndex = 0; timeIndex < _maxScheduleTimes; timeIndex++) {
       final id = _generateId(medicineId, timeIndex);
@@ -156,15 +159,16 @@ class AlarmService {
     log('AlarmService: Cancelled all alarms for medicine $medicineId');
   }
 
-  /// Cancels every scheduled alarm on the device (e.g. on sign-out).
+  /// Membatalkan seluruh alarm terjadwal di perangkat (misalnya saat logout).
   Future<void> cancelAll() async {
     await Alarm.stopAll();
     log('AlarmService: Cancelled all alarms');
   }
 
-  /// Cancels all alarms then re-arms the next occurrence for every medicine.
-  /// Never throws: this runs at startup, after login, and after an alarm is
-  /// dismissed, where an unhandled throw would break launch or the ring flow.
+  /// Membatalkan semua alarm lalu mengaktifkan ulang kemunculan berikutnya untuk
+  /// setiap obat. Tidak pernah melempar error: fungsi ini berjalan saat aplikasi
+  /// dimulai, setelah login, dan setelah sebuah alarm dimatikan, di mana error
+  /// yang tak tertangani bisa merusak proses buka aplikasi atau alur alarm.
   Future<void> rescheduleAll() async {
     await Alarm.stopAll();
     try {
@@ -178,8 +182,8 @@ class AlarmService {
     }
   }
 
-  /// Next [hour]:[minute] from now. If today's time has already passed,
-  /// returns the same time tomorrow.
+  /// [hour]:[minute] berikutnya dari sekarang. Jika waktu hari ini sudah lewat,
+  /// mengembalikan waktu yang sama untuk besok.
   DateTime _nextOccurrence(int hour, int minute) {
     final now = DateTime.now();
     var when = DateTime(now.year, now.month, now.day, hour, minute);
@@ -189,19 +193,20 @@ class AlarmService {
     return when;
   }
 
-  /// Deterministic, collision-resistant alarm id from medicine id + time slot.
-  /// Same idea as NotificationService._generateId, but one id per (medicine,
-  /// time) since a ringing alarm has no per-offset variants.
+  /// Id alarm yang deterministik dan tahan-tabrakan, dibentuk dari id obat + slot
+  /// waktu. Idenya sama seperti NotificationService._generateId, tetapi satu id
+  /// per (obat, waktu) karena alarm berbunyi tidak punya varian per-selisih.
   int _generateId(String medicineId, int timeIndex) {
     final int base =
         medicineId.hashCode.abs() % (0x7FFFFFFF ~/ _maxScheduleTimes);
     return base * _maxScheduleTimes + timeIndex;
   }
 
-  /// Reverse-maps a ringing alarm's id back to the medicine and dose slot it
-  /// belongs to, by recomputing each medicine's id for the encoded time slot.
-  /// Returns null if no current medicine matches (e.g. it was deleted), or on
-  /// a data-layer error. Lets the ring screen mark the right slot as taken.
+  /// Memetakan balik id alarm berbunyi ke obat dan slot dosis pemiliknya, dengan
+  /// menghitung ulang id tiap obat untuk slot waktu yang tersandi (encoded).
+  /// Mengembalikan null jika tidak ada obat saat ini yang cocok (misalnya sudah
+  /// dihapus), atau saat terjadi error di lapisan data. Memungkinkan layar alarm
+  /// menandai slot yang tepat sebagai sudah diminum.
   Future<({MedicineModel medicine, int timeIndex})?> resolveSlot(
     int alarmId,
   ) async {
@@ -219,22 +224,24 @@ class AlarmService {
     return null;
   }
 
-  /// True when [soundPath] is a bundled Flutter asset rather than a user-picked
-  /// file living under the app Documents directory.
+  /// Bernilai true jika [soundPath] merupakan aset Flutter bawaan, bukan file
+  /// pilihan pengguna yang berada di dalam folder Documents aplikasi.
   static bool isAssetSound(String soundPath) => soundPath.startsWith('assets/');
 
-  /// Resolves a stored ringtone value to an absolute file path for preview
-  /// playback. Bundled assets return null (they're played via AssetSource, not
-  /// a file path); custom sounds return their absolute location under Documents.
+  /// Mengubah nilai nada dering tersimpan menjadi jalur file absolut untuk
+  /// pemutaran pratinjau. Aset bawaan mengembalikan null (diputar lewat
+  /// AssetSource, bukan jalur file); suara kustom mengembalikan lokasi absolutnya
+  /// di dalam folder Documents.
   static Future<String?> resolveAbsolutePath(String soundPath) async {
     if (isAssetSound(soundPath)) return null;
     final dir = await getApplicationDocumentsDirectory();
     return p.join(dir.path, soundPath);
   }
 
-  /// Copies a picked audio file into the app Documents directory and returns the
-  /// Documents-relative path (e.g. `alarm_sounds/song.mp3`) to store in
-  /// preferences and hand to the alarm plugin. Keeps the original file name.
+  /// Menyalin file audio yang dipilih ke folder Documents aplikasi dan
+  /// mengembalikan jalur relatif-Documents (misal `alarm_sounds/song.mp3`) untuk
+  /// disimpan di preferensi dan diserahkan ke plugin alarm. Mempertahankan nama
+  /// file aslinya.
   static Future<String> importCustomSound(String sourcePath) async {
     final dir = await getApplicationDocumentsDirectory();
     final destDir = Directory(p.join(dir.path, customSoundDir));

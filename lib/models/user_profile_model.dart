@@ -1,5 +1,6 @@
-/// The user's personal & medical profile, stored per-user in Firestore under
-/// `users/{uid}` and mirrored into local SharedPreferences for offline reads.
+/// Profil pribadi & medis pengguna, disimpan per pengguna di Firestore pada
+/// `users/{uid}` dan disalin ke SharedPreferences lokal agar bisa dibaca saat
+/// offline.
 class UserProfile {
   const UserProfile({
     required this.name,
@@ -20,16 +21,17 @@ class UserProfile {
   final String bloodType;
   final String allergies;
 
-  /// The privacy-policy and terms-&-conditions versions the user agreed to at
-  /// registration, and the ISO-8601 timestamp when they agreed (both are
-  /// accepted together via a single checkbox). Empty for accounts created
-  /// before consent was recorded.
+  /// Versi kebijakan privasi dan syarat & ketentuan yang disetujui pengguna saat
+  /// registrasi, beserta timestamp ISO-8601 kapan disetujui (keduanya disetujui
+  /// sekaligus lewat satu checkbox). Kosong untuk akun yang dibuat sebelum
+  /// persetujuan mulai dicatat.
   final String consentVersion;
   final String termsVersion;
   final String consentAcceptedAt;
 
-  /// Builds a profile from a Firestore document's data map. Missing fields
-  /// default to empty strings so a partially-filled document never throws.
+  /// Membentuk profil dari map data dokumen Firestore. Field yang tidak ada
+  /// diberi nilai default string kosong, sehingga dokumen yang belum lengkap
+  /// tidak pernah menyebabkan error.
   factory UserProfile.fromMap(Map<String, dynamic> map) {
     return UserProfile(
       name: (map['name'] as String?) ?? '',
@@ -44,8 +46,9 @@ class UserProfile {
     );
   }
 
-  /// Serialises to a Firestore-writable map. `updatedAt` is added by the
-  /// repository (it uses a server timestamp sentinel, not a plain value).
+  /// Mengubah profil menjadi map yang bisa ditulis ke Firestore. Field
+  /// `updatedAt` ditambahkan oleh repository (memakai penanda timestamp server,
+  /// bukan nilai biasa).
   Map<String, dynamic> toMap() {
     return {
       'name': name,

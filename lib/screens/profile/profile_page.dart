@@ -33,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadProfilePhoto();
   }
 
-  /// Loads the saved profile photo path from SharedPreferences.
+  /// Memuat path foto profil yang tersimpan dari SharedPreferences.
   void _loadProfilePhoto() {
     final path = PreferenceHandler.profilePhoto;
     if (path != null && File(path).existsSync()) {
@@ -43,8 +43,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Copies the picked image to the app's permanent documents directory
-  /// so it survives gallery deletions or cache clears.
+  /// Menyalin gambar yang dipilih ke folder dokumen permanen milik aplikasi
+  /// agar tetap ada meski foto di galeri dihapus atau cache dibersihkan.
   Future<File> _saveImagePermanently(File image) async {
     final directory = await getApplicationDocumentsDirectory();
     final fileName =
@@ -53,8 +53,8 @@ class _ProfilePageState extends State<ProfilePage> {
     return savedImage;
   }
 
-  /// Picks an image from the specified [source] (gallery or camera),
-  /// saves it to app storage, and updates the preference.
+  /// Mengambil gambar dari sumber [source] (galeri atau kamera), menyimpannya
+  /// ke penyimpanan aplikasi, lalu memperbarui preferensi.
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -66,13 +66,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (pickedFile == null) return;
 
-      // Delete old photo file if it exists
+      // Hapus file foto lama jika ada
       await _deleteOldPhotoFile();
 
-      // Save to permanent storage
+      // Simpan ke penyimpanan permanen
       final savedImage = await _saveImagePermanently(File(pickedFile.path));
 
-      // Persist path
+      // Simpan path-nya ke preferensi
       await PreferenceHandler.saveProfilePhoto(savedImage.path);
 
       setState(() {
@@ -110,7 +110,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Deletes the previous profile photo file from disk if it exists.
+  /// Menghapus file foto profil sebelumnya dari penyimpanan jika ada.
   Future<void> _deleteOldPhotoFile() async {
     final oldPath = PreferenceHandler.profilePhoto;
     if (oldPath != null) {
@@ -121,7 +121,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Deletes the profile photo entirely (file + preference).
+  /// Menghapus foto profil sepenuhnya (file beserta preferensinya).
   Future<void> _deleteProfilePhoto() async {
     await _deleteOldPhotoFile();
     await PreferenceHandler.removeProfilePhoto();
@@ -147,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Shows a bottom sheet with options: gallery, camera, and delete.
+  /// Menampilkan bottom sheet berisi pilihan: galeri, kamera, dan hapus.
   void _showPhotoOptions() {
     showModalBottomSheet(
       context: context,
@@ -162,7 +162,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
+              // Garis penanda (handle) di atas bottom sheet
               Container(
                 width: 40,
                 height: 4,
@@ -181,7 +181,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Gallery option
+              // Pilihan galeri
               _buildOptionTile(
                 icon: Icons.photo_library_rounded,
                 title: 'Pilih dari Galeri',
@@ -193,7 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 },
               ),
               const SizedBox(height: 8),
-              // Camera option
+              // Pilihan kamera
               _buildOptionTile(
                 icon: Icons.camera_alt_rounded,
                 title: 'Ambil Foto',
@@ -204,7 +204,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _pickImage(ImageSource.camera);
                 },
               ),
-              // Delete option (only shown if a photo exists)
+              // Pilihan hapus (hanya muncul jika sudah ada foto)
               if (_profileImage != null) ...[
                 const SizedBox(height: 8),
                 _buildOptionTile(
@@ -226,7 +226,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Shows a confirmation dialog before deleting the photo.
+  /// Menampilkan dialog konfirmasi sebelum menghapus foto.
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
@@ -280,7 +280,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Builds a single option tile for the bottom sheet.
+  /// Membangun satu baris pilihan (tile) untuk bottom sheet.
   Widget _buildOptionTile({
     required IconData icon,
     required String title,
@@ -354,7 +354,7 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Column(
           children: [
-            // Profile Header Section
+            // Bagian header profil
             const SizedBox(height: 16.0),
             Center(
               child: Column(
@@ -404,7 +404,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 )
                               : null,
                         ),
-                        // Edit Avatar FAB
+                        // Tombol (FAB) untuk mengubah avatar
                         Positioned(
                           bottom: 0,
                           right: 0,
@@ -521,7 +521,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 24.0),
 
-            // Medical Info Card
+            // Kartu informasi medis
             if (PreferenceHandler.userBloodType.isNotEmpty ||
                 PreferenceHandler.userBirthDate.isNotEmpty ||
                 PreferenceHandler.userAllergies.isNotEmpty) ...[
@@ -629,7 +629,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
             const SizedBox(height: 16.0),
 
-            // Settings Options List
+            // Daftar pilihan pengaturan
             _buildSettingCard(
               'Data Diri',
               'Informasi pribadi dan rekam medis',
@@ -696,7 +696,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 28.0),
 
-            // Logout Button
+            // Tombol keluar (logout)
             SizedBox(
               width: double.infinity,
               height: 52.0,
@@ -727,9 +727,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Asks the user to confirm before logging out — a mis-tap on the Keluar
-  /// button would otherwise force a full re-login. Only proceeds when the user
-  /// explicitly confirms.
+  /// Meminta konfirmasi pengguna sebelum keluar — tanpa ini, salah tekan pada
+  /// tombol Keluar akan memaksa pengguna login ulang dari awal. Hanya lanjut
+  /// jika pengguna benar-benar mengonfirmasi.
   Future<void> _confirmLogout() async {
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -762,9 +762,9 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Signs the user out and returns to the login screen. Clears this device's
-  /// reminders so they don't leak to the next account signing in here;
-  /// medicines stay safe in Firestore and reschedule on the next login.
+  /// Mengeluarkan pengguna dan kembali ke layar login. Menghapus pengingat di
+  /// perangkat ini agar tidak bocor ke akun berikutnya yang login di sini; data
+  /// obat tetap aman di Firestore dan dijadwalkan ulang saat login berikutnya.
   Future<void> _performLogout() async {
     await NotificationService().cancelAll();
     await AuthService().signOut();

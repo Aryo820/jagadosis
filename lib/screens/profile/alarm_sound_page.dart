@@ -8,18 +8,20 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// A selectable ringtone: [path] is the value stored in preferences and handed
-/// to the alarm plugin (a bundled `assets/...` path or a Documents-relative
-/// `alarm_sounds/...` path); [name] is the label shown to the user.
+/// Satu nada dering yang bisa dipilih: [path] adalah nilai yang disimpan di
+/// preferences dan diberikan ke plugin alarm (bisa path bawaan `assets/...`
+/// atau path relatif ke folder Documents `alarm_sounds/...`); [name] adalah
+/// label yang ditampilkan ke user.
 class _SoundOption {
   const _SoundOption({required this.path, required this.name});
   final String path;
   final String name;
 }
 
-/// Lets the user pick the alarm ringtone: choose a bundled preset or import an
-/// audio file from device storage, with play/stop preview for each. The choice
-/// is saved to [PreferenceHandler] and applied to future alarms by the caller.
+/// Memungkinkan user memilih nada dering alarm: pilih preset bawaan atau impor
+/// file audio dari penyimpanan perangkat, masing-masing dengan pratinjau
+/// putar/hentikan. Pilihan disimpan ke [PreferenceHandler] dan diterapkan ke
+/// alarm berikutnya oleh pemanggilnya.
 class AlarmSoundPage extends StatefulWidget {
   const AlarmSoundPage({super.key});
 
@@ -28,8 +30,8 @@ class AlarmSoundPage extends StatefulWidget {
 }
 
 class _AlarmSoundPageState extends State<AlarmSoundPage> {
-  /// Bundled presets. Add more entries here as more assets ship in
-  /// `assets/audio/` (also list them under `flutter:` in pubspec.yaml).
+  /// Preset bawaan. Tambahkan entri lain di sini saat ada aset baru di
+  /// `assets/audio/` (daftarkan juga di bawah `flutter:` pada pubspec.yaml).
   static const List<_SoundOption> _presets = [
     _SoundOption(
       path: PreferenceHandler.defaultAlarmSound,
@@ -39,14 +41,14 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
 
   final AudioPlayer _player = AudioPlayer();
 
-  /// Currently selected ringtone path (mirrors [PreferenceHandler.alarmSound]).
+  /// Path nada dering yang sedang dipilih (mencerminkan [PreferenceHandler.alarmSound]).
   late String _selectedPath;
 
-  /// A ringtone imported from device storage this session, shown as an extra
-  /// option below the presets. Null when the saved sound is a preset.
+  /// Nada dering yang diimpor dari perangkat pada sesi ini, ditampilkan sebagai
+  /// opsi tambahan di bawah preset. Null jika suara tersimpan adalah preset.
   _SoundOption? _customOption;
 
-  /// Path of the option currently previewing, or null when nothing is playing.
+  /// Path opsi yang sedang diputar sebagai pratinjau, atau null jika tidak ada yang diputar.
   String? _previewingPath;
 
   bool _importing = false;
@@ -55,8 +57,8 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
   void initState() {
     super.initState();
     _selectedPath = PreferenceHandler.alarmSound;
-    // If the saved sound is a custom import, surface it as a selectable option
-    // so it stays visible and re-selectable on this screen.
+    // Jika suara tersimpan adalah hasil impor, tampilkan sebagai opsi yang bisa
+    // dipilih agar tetap terlihat dan bisa dipilih ulang di layar ini.
     if (!AlarmService.isAssetSound(_selectedPath)) {
       _customOption = _SoundOption(
         path: _selectedPath,
@@ -64,7 +66,7 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
       );
     }
 
-    // Reset the play/stop icon back to "play" once a preview finishes on its own.
+    // Kembalikan ikon putar/hentikan ke "putar" begitu pratinjau selesai dengan sendirinya.
     _player.onPlayerComplete.listen((_) {
       if (mounted) setState(() => _previewingPath = null);
     });
@@ -76,8 +78,8 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
     super.dispose();
   }
 
-  /// Plays a short preview of [option], or stops if it's already previewing.
-  /// Bundled assets play via AssetSource; imported files via DeviceFileSource.
+  /// Memutar pratinjau singkat [option], atau menghentikannya jika sedang diputar.
+  /// Aset bawaan diputar lewat AssetSource; file impor lewat DeviceFileSource.
   Future<void> _togglePreview(_SoundOption option) async {
     if (_previewingPath == option.path) {
       await _player.stop();
@@ -88,7 +90,7 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
     await _player.stop();
     try {
       if (AlarmService.isAssetSound(option.path)) {
-        // AssetSource paths are relative to the `assets/` prefix in pubspec.
+        // Path AssetSource dihitung relatif terhadap prefix `assets/` di pubspec.
         await _player.play(AssetSource(option.path.replaceFirst('assets/', '')));
       } else {
         final abs = await AlarmService.resolveAbsolutePath(option.path);
@@ -105,15 +107,15 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
     }
   }
 
-  /// Opens the system file picker, copies the chosen audio into app storage,
-  /// and selects it. The copy keeps the sound playable after the source file
-  /// moves or the picker's cache is cleared.
+  /// Membuka file picker sistem, menyalin audio yang dipilih ke penyimpanan aplikasi,
+  /// lalu memilihnya. Salinan ini menjaga suara tetap bisa diputar meski file asli
+  /// berpindah atau cache picker dibersihkan.
   Future<void> _importFromDevice() async {
     setState(() => _importing = true);
     try {
       final result = await FilePicker.platform.pickFiles(type: FileType.audio);
       final sourcePath = result?.files.single.path;
-      if (sourcePath == null) return; // Cancelled or no accessible path.
+      if (sourcePath == null) return; // Dibatalkan atau path tidak dapat diakses.
 
       final relativePath = await AlarmService.importCustomSound(sourcePath);
       final name = result!.files.single.name;
@@ -136,15 +138,15 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
     setState(() => _selectedPath = path);
   }
 
-  /// Persists the selection, re-arms alarms so it takes effect, and returns.
+  /// Menyimpan pilihan, memasang ulang alarm agar berlaku, lalu kembali ke layar sebelumnya.
   Future<void> _save() async {
     final option = [..._presets, ?_customOption]
         .firstWhere((o) => o.path == _selectedPath, orElse: () => _presets.first);
 
     await _player.stop();
     await PreferenceHandler.setAlarmSound(option.path, option.name);
-    // Sound is baked into each AlarmSettings at schedule time, so rebuild the
-    // schedule for the new ringtone to apply to upcoming alarms.
+    // Suara sudah tertanam di tiap AlarmSettings saat penjadwalan, jadi jadwal
+    // perlu dibangun ulang agar nada dering baru berlaku untuk alarm berikutnya.
     if (PreferenceHandler.notificationGlobal) {
       await AlarmService().rescheduleAll();
     }
@@ -223,7 +225,7 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
                     ),
                   ),
                   const SizedBox(height: 24.0),
-                  // Import from device
+                  // Impor dari perangkat
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -256,7 +258,7 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
                 ],
               ),
             ),
-            // Save bar
+            // Bilah tombol simpan
             Container(
               padding: const EdgeInsets.all(24.0),
               decoration: BoxDecoration(

@@ -23,9 +23,9 @@ class _HistoryPageState extends State<HistoryPage>
   int _weeklyAdherence = 0;
   CalendarViewMode _viewMode = CalendarViewMode.weekly;
 
-  // For monthly calendar navigation
+  // Untuk navigasi kalender tampilan bulanan
   late DateTime _displayedMonth;
-  // For yearly view navigation
+  // Untuk navigasi tampilan tahunan
   late int _displayedYear;
 
   late AnimationController _animController;
@@ -56,7 +56,7 @@ class _HistoryPageState extends State<HistoryPage>
     super.dispose();
   }
 
-  /// Loads the history logs based on the current view mode.
+  /// Memuat catatan riwayat sesuai mode tampilan yang sedang aktif.
   Future<void> _loadHistory() async {
     setState(() {
       _isLoading = true;
@@ -79,11 +79,12 @@ class _HistoryPageState extends State<HistoryPage>
           break;
       }
 
-      // Adherence must reflect the period currently in view (the logs just
-      // fetched for this day/month/year), not an all-time total — otherwise the
-      // percentage wouldn't match the entries shown right below it. With no logs
-      // in the period there is no adherence to report, so it shows 0% rather
-      // than a misleading 100%.
+      // Kepatuhan harus mencerminkan periode yang sedang ditampilkan (catatan
+      // yang baru diambil untuk hari/bulan/tahun ini), bukan total sepanjang
+      // waktu — kalau tidak, persentasenya tidak akan cocok dengan daftar yang
+      // muncul tepat di bawahnya. Kalau tidak ada catatan di periode ini, tidak
+      // ada kepatuhan yang bisa dihitung, jadi ditampilkan 0% bukan 100% yang
+      // menyesatkan.
       final takenCount = logs.where((log) => log.status == 'taken').length;
       final totalCount = logs.length;
 
@@ -100,7 +101,7 @@ class _HistoryPageState extends State<HistoryPage>
         _isLoading = false;
       });
 
-      // Restart fade animation
+      // Mulai ulang animasi fade
       _animController.reset();
       _animController.forward();
     } catch (e) {
@@ -111,11 +112,11 @@ class _HistoryPageState extends State<HistoryPage>
     }
   }
 
-  /// Helpers for dynamic dates
+  /// Fungsi bantu untuk menghitung tanggal secara dinamis
   List<DateTime> _getWeekDays() {
-    // Anchor the week on the selected date, not "today": navigating from the
-    // monthly view to a past date must show that date's week in the strip, in
-    // sync with the logs loaded for it.
+    // Patokan minggunya adalah tanggal yang dipilih, bukan "hari ini": saat
+    // berpindah dari tampilan bulanan ke tanggal lampau, strip minggu harus
+    // menampilkan minggu tanggal tersebut, sesuai catatan yang dimuat untuknya.
     final monday = _selectedDate.subtract(
       Duration(days: _selectedDate.weekday - 1),
     );
@@ -197,19 +198,19 @@ class _HistoryPageState extends State<HistoryPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Adherence summary card
+            // Kartu ringkasan kepatuhan
             _buildAdherenceCard(),
             const SizedBox(height: 24.0),
 
-            // View mode toggle
+            // Tombol pengalih mode tampilan
             _buildViewModeToggle(),
             const SizedBox(height: 16.0),
 
-            // Calendar section based on view mode
+            // Bagian kalender sesuai mode tampilan
             _buildCalendarSection(),
             const SizedBox(height: 24.0),
 
-            // Data section
+            // Bagian data
             FadeTransition(opacity: _fadeAnim, child: _buildDataSection()),
           ],
         ),
@@ -218,7 +219,7 @@ class _HistoryPageState extends State<HistoryPage>
   }
 
   // ==========================================
-  // VIEW MODE TOGGLE
+  // TOMBOL PENGALIH MODE TAMPILAN
   // ==========================================
 
   Widget _buildViewModeToggle() {
@@ -276,7 +277,7 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  // CALENDAR SECTION
+  // BAGIAN KALENDER
 
   Widget _buildCalendarSection() {
     switch (_viewMode) {
@@ -289,7 +290,7 @@ class _HistoryPageState extends State<HistoryPage>
     }
   }
 
-  // --- WEEKLY ---
+  // --- MINGGUAN ---
   Widget _buildWeeklyCalendar() {
     return Column(
       children: [
@@ -356,7 +357,7 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  // --- MONTHLY ---
+  // --- BULANAN ---
   Widget _buildMonthlyCalendar() {
     final now = DateTime.now();
     final daysInMonth = DateTime(
@@ -369,7 +370,7 @@ class _HistoryPageState extends State<HistoryPage>
       _displayedMonth.month,
       1,
     ).weekday;
-    // Monday = 1, Sunday = 7. We want Monday as first column.
+    // Senin = 1, Minggu = 7. Kita ingin Senin sebagai kolom pertama.
     final leadingBlanks = firstWeekday - 1;
 
     return Container(
@@ -388,7 +389,7 @@ class _HistoryPageState extends State<HistoryPage>
       ),
       child: Column(
         children: [
-          // Month navigation header
+          // Bagian atas untuk navigasi bulan
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -436,7 +437,7 @@ class _HistoryPageState extends State<HistoryPage>
           ),
           const SizedBox(height: 8.0),
 
-          // Day-of-week headers
+          // Judul nama-nama hari
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
@@ -459,7 +460,7 @@ class _HistoryPageState extends State<HistoryPage>
           ),
           const SizedBox(height: 8.0),
 
-          // Calendar grid
+          // Grid kalender
           ...List.generate(((leadingBlanks + daysInMonth) / 7).ceil(), (
             weekIndex,
           ) {
@@ -490,7 +491,7 @@ class _HistoryPageState extends State<HistoryPage>
                       cellDate.day == _selectedDate.day;
                   final isFuture = cellDate.isAfter(now);
 
-                  // Check if this date has logs
+                  // Cek apakah tanggal ini punya catatan
                   final hasLogs = _histories.any(
                     (h) =>
                         h.takenAt.year == cellDate.year &&
@@ -502,7 +503,7 @@ class _HistoryPageState extends State<HistoryPage>
                     onTap: () {
                       setState(() {
                         _selectedDate = cellDate;
-                        // Switch to weekly mode to show daily detail
+                        // Beralih ke mode mingguan untuk menampilkan detail harian
                         _viewMode = CalendarViewMode.weekly;
                       });
                       _loadHistory();
@@ -560,7 +561,7 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  // --- YEARLY ---
+  // --- TAHUNAN ---
   Widget _buildYearlyCalendar() {
     final now = DateTime.now();
 
@@ -580,7 +581,7 @@ class _HistoryPageState extends State<HistoryPage>
       ),
       child: Column(
         children: [
-          // Year navigation header
+          // Bagian atas untuk navigasi tahun
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -622,7 +623,7 @@ class _HistoryPageState extends State<HistoryPage>
           ),
           const SizedBox(height: 12.0),
 
-          // 4x3 month grid
+          // Grid 12 bulan (4 kolom x 3 baris)
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -641,7 +642,7 @@ class _HistoryPageState extends State<HistoryPage>
                   _displayedYear > now.year ||
                   (_displayedYear == now.year && month > now.month);
 
-              // Count logs for this month
+              // Hitung jumlah catatan untuk bulan ini
               final monthLogCount = _histories
                   .where(
                     (h) =>
@@ -711,7 +712,7 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  // DATA SECTION
+  // BAGIAN DATA
   Widget _buildDataSection() {
     if (_isLoading) {
       return const Center(
@@ -734,7 +735,7 @@ class _HistoryPageState extends State<HistoryPage>
     }
   }
 
-  // --- Daily log (weekly mode) ---
+  // --- Catatan harian (mode mingguan) ---
   Widget _buildDailyLogSection() {
     final List<HistoryModel> morningLogs = [];
     final List<HistoryModel> afternoonLogs = [];
@@ -801,7 +802,7 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  // --- Grouped log (monthly/yearly mode) ---
+  // --- Catatan yang dikelompokkan (mode bulanan/tahunan) ---
   Widget _buildGroupedLogSection(String periodTitle) {
     if (_histories.isEmpty) {
       return Column(
@@ -821,7 +822,7 @@ class _HistoryPageState extends State<HistoryPage>
       );
     }
 
-    // Group histories by date
+    // Kelompokkan riwayat berdasarkan tanggal
     final Map<String, List<HistoryModel>> grouped = {};
     for (final log in _histories) {
       final dateKey =
@@ -829,7 +830,7 @@ class _HistoryPageState extends State<HistoryPage>
       grouped.putIfAbsent(dateKey, () => []).add(log);
     }
 
-    // Sort date keys descending
+    // Urutkan kunci tanggal dari yang terbaru ke terlama
     final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return Column(
@@ -897,7 +898,7 @@ class _HistoryPageState extends State<HistoryPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date header
+          // Bagian atas berisi tanggal
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -944,7 +945,7 @@ class _HistoryPageState extends State<HistoryPage>
                   ),
                 ],
               ),
-              // Mini adherence indicator
+              // Indikator kecil status kepatuhan
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 8.0,
@@ -973,7 +974,7 @@ class _HistoryPageState extends State<HistoryPage>
             const SizedBox(height: 12.0),
             const Divider(height: 1.0, color: Color(0xFFEEEEEE)),
             const SizedBox(height: 12.0),
-            // List of medicines for that day
+            // Daftar obat untuk hari tersebut
             ...logs.map((log) {
               final timeString =
                   '${log.takenAt.hour.toString().padLeft(2, '0')}:${log.takenAt.minute.toString().padLeft(2, '0')}';
@@ -1020,7 +1021,7 @@ class _HistoryPageState extends State<HistoryPage>
   }
 
   // ==========================================
-  // ADHERENCE CARD
+  // KARTU KEPATUHAN
   // ==========================================
 
   Widget _buildAdherenceCard() {
@@ -1120,7 +1121,7 @@ class _HistoryPageState extends State<HistoryPage>
   }
 
   // ==========================================
-  // SHARED WIDGETS
+  // WIDGET BERSAMA
   // ==========================================
 
   Widget _buildEmptyState() {

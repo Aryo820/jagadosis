@@ -4,31 +4,35 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Gates write actions (creating/editing data tied to the account) behind email
-/// verification. Reading stays open — only actions that persist identity data
-/// are guarded — so an unverified user can explore the app but can't populate
-/// it, and thus a throwaway/misspelled email never seeds real records.
+/// Membatasi aksi tulis (membuat/mengubah data yang terkait akun) agar hanya
+/// bisa dilakukan setelah email diverifikasi. Aksi baca tetap terbuka — hanya
+/// aksi yang menyimpan data identitas yang dijaga — sehingga pengguna yang belum
+/// terverifikasi bisa menjelajahi aplikasi tetapi tidak bisa mengisinya, dan
+/// dengan begitu email asal-asalan/salah ketik tidak akan membuat data asli.
 ///
-/// Verification is Firebase's only proof that the address genuinely belongs to
-/// the user: sign-up succeeds for any well-formed email, so [emailVerified] is
-/// what we check, not mere account existence.
+/// Verifikasi adalah satu-satunya bukti bagi Firebase bahwa alamat email benar-
+/// benar milik pengguna: pendaftaran berhasil untuk email apa pun yang formatnya
+/// valid, jadi yang kita periksa adalah [emailVerified], bukan sekadar apakah
+/// akunnya ada.
 class EmailVerificationGuard {
   EmailVerificationGuard._();
 
   static final AuthService _authService = AuthService();
 
-  /// Call at the start of a guarded action:
+  /// Panggil di awal aksi yang dijaga:
   ///
   /// ```dart
   /// if (!await EmailVerificationGuard.ensureVerified(context)) return;
   /// ```
   ///
-  /// Refreshes the user from the server first so a verification the user just
-  /// completed in their browser is picked up without needing to re-login.
-  /// Returns true when the action may proceed; false after showing the prompt.
+  /// Menyegarkan data pengguna dari server terlebih dulu agar verifikasi yang
+  /// baru saja diselesaikan pengguna di browser langsung terdeteksi tanpa perlu
+  /// login ulang. Mengembalikan true jika aksi boleh dilanjutkan; false setelah
+  /// menampilkan dialog peringatan.
   static Future<bool> ensureVerified(BuildContext context) async {
-    // Best-effort refresh: a network hiccup shouldn't crash the action, it just
-    // means we fall back to the last-known (unverified) status and prompt.
+    // Penyegaran sebisanya: gangguan jaringan tidak boleh membuat aksi gagal
+    // total, cukup kembali ke status terakhir yang diketahui (belum
+    // terverifikasi) lalu tampilkan dialog peringatan.
     try {
       await _authService.reloadCurrentUser();
     } catch (_) {}
@@ -40,8 +44,8 @@ class EmailVerificationGuard {
     return false;
   }
 
-  /// Resends the verification email and reports the outcome via a SnackBar.
-  /// Shared by the guard dialog and the home-screen banner.
+  /// Mengirim ulang email verifikasi dan menampilkan hasilnya lewat SnackBar.
+  /// Dipakai bersama oleh dialog penjaga (guard) dan banner di layar utama.
   static Future<void> resendVerificationEmail(BuildContext context) async {
     try {
       await _authService.sendEmailVerification();

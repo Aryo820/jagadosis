@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 
-/// Bumped whenever a medicine's dose state changes from *outside* the widget
-/// that currently owns the list — most notably when a dose is confirmed from
-/// the full-screen alarm ring screen. Screens like HomePage listen to this and
-/// reload, so the "jadwal terdekat" updates immediately without the user having
-/// to switch bottom-navigation tabs to force a rebuild.
+/// Dinaikkan nilainya setiap kali status dosis sebuah obat berubah dari *luar*
+/// widget yang saat ini memiliki daftar tersebut — terutama saat sebuah dosis
+/// dikonfirmasi dari layar alarm berbunyi layar penuh. Layar seperti HomePage
+/// mendengarkan (listen) perubahan ini lalu memuat ulang, sehingga "jadwal
+/// terdekat" langsung ter-update tanpa pengguna harus berpindah tab navigasi
+/// bawah untuk memaksa pembangunan ulang (rebuild).
 final ValueNotifier<int> medicineDataRevision = ValueNotifier<int>(0);
 
-/// Signals that medicine/dose data changed and open screens should refresh.
+/// Memberi sinyal bahwa data obat/dosis berubah dan layar yang terbuka sebaiknya menyegarkan tampilan.
 void notifyMedicineDataChanged() => medicineDataRevision.value++;

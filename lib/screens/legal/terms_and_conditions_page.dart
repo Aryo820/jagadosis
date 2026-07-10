@@ -2,15 +2,17 @@ import 'package:aplikasi/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// The version of the terms & conditions currently shown to users. Bump this
-/// whenever the terms below change materially — the value is recorded against
-/// each account at registration (see [ProfileService.createInitial]), so a
-/// change here lets us tell who agreed to which version.
+/// Versi syarat & ketentuan yang saat ini ditampilkan kepada pengguna. Naikkan
+/// nilai ini setiap kali isi ketentuan di bawah berubah secara signifikan —
+/// nilainya dicatat pada tiap akun saat registrasi (lihat
+/// [ProfileService.createInitial]), sehingga perubahan di sini memungkinkan kita
+/// mengetahui siapa yang menyetujui versi yang mana.
 const String termsVersion = '1.0';
 
-/// A read-only, in-app rendering of JagaDosis' terms & conditions. Opened from
-/// the consent checkbox on the registration screen. The copy below is a
-/// starting point meant to be reviewed/replaced by the real legal text.
+/// Tampilan syarat & ketentuan JagaDosis di dalam aplikasi yang bersifat
+/// baca-saja. Dibuka dari kotak centang persetujuan pada layar registrasi. Teks
+/// di bawah hanyalah titik awal yang dimaksudkan untuk ditinjau/diganti dengan
+/// teks hukum yang sebenarnya.
 class TermsAndConditionsPage extends StatelessWidget {
   const TermsAndConditionsPage({super.key});
 
@@ -56,8 +58,8 @@ class TermsAndConditionsPage extends StatelessWidget {
               ),
               const SizedBox(height: 24.0),
 
-              // Medical disclaimer — highlighted because it is the most
-              // important clause for a health/medication-reminder app.
+              // Penyangkalan medis — ditonjolkan karena ini klausul paling
+              // penting untuk aplikasi kesehatan/pengingat obat.
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),

@@ -5,26 +5,27 @@ import 'package:aplikasi/database/preference_handler.dart';
 import 'package:aplikasi/models/user_profile_model.dart';
 import 'package:aplikasi/repositories/user_profile_repository.dart';
 
-/// Orchestrates the user profile across its two stores: Cloud Firestore (the
-/// durable, cross-device source of truth) and SharedPreferences (a local cache
-/// the existing UI reads synchronously and offline).
+/// Mengatur profil pengguna di dua tempat penyimpanannya: Cloud Firestore
+/// (sumber kebenaran yang tahan lama dan lintas perangkat) dan SharedPreferences
+/// (cache lokal yang dibaca UI secara sinkron dan saat offline).
 ///
-/// Keeping this seam in one place means the pages/auth flows call a single,
-/// intention-revealing method and never have to know both stores exist.
+/// Dengan menyatukan titik sambung ini di satu tempat, halaman/alur autentikasi
+/// cukup memanggil satu metode yang jelas maksudnya, dan tidak perlu tahu bahwa
+/// ada dua tempat penyimpanan.
 class ProfileService {
   ProfileService({UserProfileRepository? repository})
     : _repo = repository ?? UserProfileRepository();
 
   final UserProfileRepository _repo;
 
-  /// Seeds the Firestore document right after registration (while the new
-  /// account is still authenticated). Only name/email are known at this point;
-  /// the merge write leaves room for medical details added later.
+  /// Mengisi dokumen Firestore awal tepat setelah pendaftaran (selagi akun baru
+  /// masih terautentikasi). Pada tahap ini hanya nama/email yang diketahui;
+  /// penulisan merge menyisakan ruang untuk detail medis yang ditambahkan nanti.
   ///
-  /// When [consentVersion]/[termsVersion] are provided, the accepted
-  /// privacy-policy and terms versions plus an acceptance timestamp are
-  /// recorded alongside the profile, giving a durable audit trail of what the
-  /// user agreed to at sign-up.
+  /// Bila [consentVersion]/[termsVersion] diberikan, versi kebijakan privasi dan
+  /// ketentuan yang disetujui beserta waktu persetujuannya ikut dicatat bersama
+  /// profil, sehingga ada jejak audit yang tahan lama tentang apa yang disetujui
+  /// pengguna saat mendaftar.
   Future<void> createInitial({
     required String name,
     required String email,
@@ -45,25 +46,28 @@ class ProfileService {
     );
   }
 
-  /// Pulls the remote profile into the local cache after login so the greeting,
-  /// profile page and Data Diri form reflect data entered on other devices.
-  /// Silently does nothing when the user has no profile document yet.
+  /// Menarik profil dari server ke cache lokal setelah login agar sapaan, halaman
+  /// profil, dan formulir Data Diri mencerminkan data yang dimasukkan di perangkat
+  /// lain. Diam saja (tidak melakukan apa-apa) bila pengguna belum punya dokumen
+  /// profil.
   Future<void> pullIntoCache() async {
     final profile = await _repo.fetch();
     if (profile == null) return;
     await _writeCache(profile);
   }
 
-  /// Persists profile edits. Writes the local cache first so the UI updates
-  /// instantly, then hands the Firestore write off without awaiting it: with
-  /// offline persistence enabled, awaiting `set()` would hang until the device
-  /// reconnects. Firestore queues the write locally and syncs it on reconnect.
+  /// Menyimpan perubahan profil. Menulis cache lokal terlebih dahulu agar UI
+  /// langsung ter-update, lalu menyerahkan penulisan ke Firestore tanpa menunggu
+  /// (await): dengan persistensi offline aktif, meng-await `set()` akan
+  /// menggantung sampai perangkat terhubung kembali. Firestore mengantrekan
+  /// penulisan secara lokal dan menyinkronkannya saat kembali online.
   Future<void> saveProfile(UserProfile profile) async {
     await _writeCache(profile);
-    // Fire-and-forget, but surface failures: a permission/quota error would
-    // otherwise vanish silently, leaving the cache and Firestore out of sync
-    // with no trace. Offline writes still queue and resolve later, so a timeout
-    // here isn't a failure — only real errors reach catchError.
+    // Kirim-lalu-lupakan (fire-and-forget), tetapi tetap tampilkan kegagalannya:
+    // error izin/kuota kalau tidak akan hilang diam-diam, meninggalkan cache dan
+    // Firestore tidak sinkron tanpa jejak. Penulisan saat offline tetap
+    // diantrekan dan diselesaikan nanti, jadi timeout di sini bukan sebuah
+    // kegagalan — hanya error sungguhan yang sampai ke catchError.
     unawaited(
       _repo.save(profile).catchError(
         (e) => log('ProfileService: Firestore profile save failed: $e'),

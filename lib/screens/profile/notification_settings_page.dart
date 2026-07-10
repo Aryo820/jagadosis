@@ -32,15 +32,17 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     _alarmSoundName = PreferenceHandler.alarmSoundName;
   }
 
-  /// Opens the ringtone picker, then refreshes the shown name. The picker saves
-  /// the choice and reschedules alarms itself, so we only re-read the label.
+  /// Membuka pemilih nada dering, lalu menyegarkan nama yang ditampilkan.
+  /// Pemilih itu sendiri yang menyimpan pilihan dan menjadwalkan ulang alarm,
+  /// jadi di sini kita cukup membaca ulang labelnya.
   Future<void> _openSoundPicker() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AlarmSoundPage()),
     );
-    // Push di atas baru selesai saat user keluar dari picker, jadi halaman ini
-    // bisa saja sudah tidak terpasang. Guard sebelum setState.
+    // Push di atas baru selesai ketika pengguna keluar dari pemilih, jadi
+    // halaman ini bisa saja sudah tidak terpasang lagi. Periksa dulu sebelum
+    // memanggil setState.
     if (!mounted) return;
     setState(() {
       _alarmSoundName = PreferenceHandler.alarmSoundName;
@@ -48,9 +50,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   }
 
   Future<void> _updateGlobal(bool value) async {
-    // Persist first so scheduling reads the new value, then apply it: turning
-    // reminders off clears everything scheduled; turning them back on rebuilds
-    // the schedule from the user's medicines.
+    // Simpan dulu supaya proses penjadwalan membaca nilai yang baru, lalu
+    // terapkan: mematikan pengingat akan menghapus semua yang sudah dijadwalkan;
+    // menyalakannya kembali akan menyusun ulang jadwal dari daftar obat pengguna.
     await PreferenceHandler.setNotificationGlobal(value);
     if (!mounted) return;
     setState(() {
@@ -69,8 +71,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     setState(() {
       _soundEnabled = value;
     });
-    // Sound/vibration are baked into notifications at schedule time, so rebuild
-    // the schedule for the change to take effect on upcoming reminders.
+    // Suara/getaran ditanamkan ke notifikasi saat penjadwalan, jadi jadwal
+    // harus disusun ulang agar perubahan berlaku pada pengingat berikutnya.
     await _reapplyIfEnabled();
   }
 
@@ -83,8 +85,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     await _reapplyIfEnabled();
   }
 
-  /// Reschedules to bake in changed alert preferences, but only while global
-  /// reminders are on (otherwise there's nothing scheduled to update).
+  /// Menjadwalkan ulang untuk menerapkan perubahan preferensi peringatan, tetapi
+  /// hanya jika pengingat global sedang aktif (kalau tidak, tak ada jadwal yang
+  /// perlu diperbarui).
   Future<void> _reapplyIfEnabled() async {
     if (_globalEnabled) {
       await _notificationService.rescheduleAll();
@@ -125,7 +128,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Info Header
+            // Header informasi
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
@@ -152,7 +155,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             ),
             const SizedBox(height: 24.0),
             
-            // Global Notification Switch
+            // Sakelar notifikasi global
             Text(
               'Umum',
               style: GoogleFonts.plusJakartaSans(
@@ -207,7 +210,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             ),
             const SizedBox(height: 24.0),
 
-            // Alert Behaviour Section
+            // Bagian pengaturan perilaku peringatan
             AnimatedOpacity(
               opacity: _globalEnabled ? 1.0 : 0.4,
               duration: const Duration(milliseconds: 200),
@@ -240,7 +243,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       ),
                       child: Column(
                         children: [
-                          // Sound Switch
+                          // Sakelar suara
                           ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                             leading: Container(
@@ -267,7 +270,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                             ),
                           ),
                           const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF1F3F9)),
-                          // Vibration Switch
+                          // Sakelar getaran
                           ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                             leading: Container(
@@ -294,7 +297,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                             ),
                           ),
                           const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF1F3F9)),
-                          // Ringtone picker
+                          // Pemilih nada dering
                           ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                             onTap: _openSoundPicker,
@@ -328,7 +331,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     ),
                     const SizedBox(height: 24.0),
 
-                    // Snooze / Reminder Interval Section
+                    // Bagian interval snooze / pengingat ulang
                     Text(
                       'Interval Pengingat Ulang (Snooze)',
                       style: GoogleFonts.plusJakartaSans(

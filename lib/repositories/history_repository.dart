@@ -5,12 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
-/// Repository managing consumption history in Cloud Firestore, scoped to the
-/// signed-in user at `users/{uid}/history/{id}`.
+/// Repository yang mengelola riwayat konsumsi obat di Cloud Firestore, khusus
+/// milik user yang sedang login, di path `users/{uid}/history/{id}`.
 ///
-/// `takenAt` is stored as an ISO-8601 string (via [HistoryModel.toMap]), which
-/// sorts lexicographically in the same order as chronologically — so range
-/// filters and ordering work directly on the string without extra indexes.
+/// `takenAt` disimpan sebagai teks berformat ISO-8601 (lewat [HistoryModel.toMap]).
+/// Urutan teks ISO-8601 secara alfabet sama dengan urutan waktunya — jadi filter
+/// rentang tanggal dan pengurutan bisa langsung memakai teks itu tanpa index tambahan.
 class HistoryRepository {
   HistoryRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
     : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -21,14 +21,14 @@ class HistoryRepository {
 
   static final DateFormat _dayFormat = DateFormat('yyyy-MM-dd');
 
-  /// The current user's `history` sub-collection, or null when signed out.
+  /// Sub-koleksi `history` milik user yang sedang login, atau null jika belum login.
   CollectionReference<Map<String, dynamic>>? get _col {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
     return _firestore.collection('users').doc(uid).collection('history');
   }
 
-  /// Adds a new consumption history entry, keyed by its id.
+  /// Menambahkan satu entri riwayat konsumsi baru, disimpan dengan id-nya.
   Future<void> addHistory(HistoryModel history) async {
     final col = _col;
     if (col == null) return;
@@ -37,8 +37,9 @@ class HistoryRepository {
         .set(history.toMap())
         .timeout(
           const Duration(seconds: 3),
-          // Expected while offline (mirrors MedicineRepository): applied to the
-          // local cache, synced on reconnect. Logged so a real stall is visible.
+          // Wajar terjadi saat offline (sama seperti MedicineRepository): data
+          // ditulis ke cache lokal dulu, lalu disinkronkan saat online kembali.
+          // Dicatat di log supaya kalau ada masalah nyata (bukan sekadar offline) tetap terlihat.
           onTimeout: () => log(
             'HistoryRepository: write not acknowledged within 3s (offline?); '
             'applied locally, will sync on reconnect',
@@ -46,7 +47,7 @@ class HistoryRepository {
         );
   }
 
-  /// Retrieves all history entries, newest first.
+  /// Mengambil semua entri riwayat, diurutkan dari yang terbaru.
   Future<List<HistoryModel>> getAllHistories() async {
     final col = _col;
     if (col == null) return [];
@@ -54,30 +55,30 @@ class HistoryRepository {
     return _mapDocs(snapshot);
   }
 
-  /// Retrieves history entries recorded on [date] (local calendar day).
+  /// Mengambil entri riwayat yang tercatat pada tanggal [date] (hari kalender lokal).
   Future<List<HistoryModel>> getHistoriesByDate(DateTime date) {
     final start = DateTime(date.year, date.month, date.day);
     final end = start.add(const Duration(days: 1));
     return _rangeQuery(start, end);
   }
 
-  /// Retrieves history entries recorded within the given [month] of [year].
+  /// Mengambil entri riwayat yang tercatat dalam bulan [month] pada tahun [year].
   Future<List<HistoryModel>> getHistoriesByMonth(int year, int month) {
     final start = DateTime(year, month, 1);
-    final end = DateTime(year, month + 1, 1); // month 13 rolls to next Jan
+    final end = DateTime(year, month + 1, 1); // bulan ke-13 otomatis jadi Januari tahun berikutnya
     return _rangeQuery(start, end);
   }
 
-  /// Retrieves history entries recorded within the given [year].
+  /// Mengambil entri riwayat yang tercatat dalam tahun [year].
   Future<List<HistoryModel>> getHistoriesByYear(int year) {
     final start = DateTime(year, 1, 1);
     final end = DateTime(year + 1, 1, 1);
     return _rangeQuery(start, end);
   }
 
-  /// Half-open range query [start, end) on the ISO `takenAt` string, newest
-  /// first. The inequality and the ordering share the `takenAt` field, so
-  /// Firestore serves it from a single-field index (no composite index needed).
+  /// Query rentang setengah-terbuka [start, end) pada teks ISO `takenAt`, diurutkan
+  /// dari yang terbaru. Karena syarat rentang dan pengurutan sama-sama memakai field
+  /// `takenAt`, Firestore cukup memakai index satu field (tidak perlu composite index).
   Future<List<HistoryModel>> _rangeQuery(DateTime start, DateTime end) async {
     final col = _col;
     if (col == null) return [];

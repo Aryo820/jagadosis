@@ -1,23 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Thin wrapper around [FirebaseAuth] for email/password authentication.
+/// Pembungkus ringan di atas [FirebaseAuth] untuk autentikasi email/kata sandi.
 ///
-/// Centralises sign-up, sign-in, password reset and sign-out so the UI never
-/// touches [FirebaseAuth] directly, and translates [FirebaseAuthException]s
-/// into Indonesian, user-facing messages via [messageFromException].
+/// Memusatkan proses daftar, masuk, reset kata sandi, dan keluar agar UI tidak
+/// pernah menyentuh [FirebaseAuth] secara langsung, serta menerjemahkan
+/// [FirebaseAuthException] menjadi pesan berbahasa Indonesia yang ramah pengguna
+/// lewat [messageFromException].
 class AuthService {
   AuthService({FirebaseAuth? firebaseAuth})
     : _auth = firebaseAuth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _auth;
 
-  /// The currently signed-in user, or null when signed out.
+  /// Pengguna yang sedang login, atau null jika sedang tidak login.
   User? get currentUser => _auth.currentUser;
 
-  /// Registers a new account, stores [name] as its display name and sends a
-  /// verification email to [email] so the address can be proven to belong to
-  /// the user.
-  /// Throws [FirebaseAuthException] on failure (e.g. email already in use).
+  /// Mendaftarkan akun baru, menyimpan [name] sebagai nama tampilan, dan
+  /// mengirim email verifikasi ke [email] agar alamat tersebut bisa dibuktikan
+  /// milik pengguna.
+  /// Melempar [FirebaseAuthException] jika gagal (misal email sudah dipakai).
   Future<User> register({
     required String name,
     required String email,
@@ -29,33 +30,34 @@ class AuthService {
     );
     final user = credential.user!;
     await user.updateDisplayName(name);
-    // Fire off the verification email while the new account is still signed in
-    // (sendEmailVerification requires an authenticated user).
+    // Kirim email verifikasi selagi akun baru masih dalam keadaan login
+    // (sendEmailVerification membutuhkan pengguna yang sudah terautentikasi).
     await user.sendEmailVerification();
     await user.reload();
     return _auth.currentUser ?? user;
   }
 
-  /// Whether the signed-in user has confirmed their email address.
-  /// False when signed out.
+  /// Apakah pengguna yang login sudah mengonfirmasi alamat emailnya.
+  /// Bernilai false jika sedang tidak login.
   bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
 
-  /// Re-sends the verification email to the current user.
-  /// Throws [FirebaseAuthException] on failure (e.g. too many requests).
+  /// Mengirim ulang email verifikasi ke pengguna saat ini.
+  /// Melempar [FirebaseAuthException] jika gagal (misal terlalu banyak permintaan).
   Future<void> sendEmailVerification() async {
     await _auth.currentUser?.sendEmailVerification();
   }
 
-  /// Refreshes the current user from the server so [isEmailVerified] reflects a
-  /// verification the user just completed in their browser.
+  /// Menyegarkan data pengguna saat ini dari server agar [isEmailVerified]
+  /// mencerminkan verifikasi yang baru saja diselesaikan pengguna di browser.
   ///
-  /// reload() only updates the client-side [User.emailVerified] flag. Firestore
-  /// security rules, however, read `email_verified` from the ID *token*, which
-  /// is cached (~1 hour) and is NOT refreshed by reload(). Without forcing a new
-  /// token, a just-verified user still fails every verification-gated write
-  /// (e.g. adding a medicine) with permission-denied even though the app thinks
-  /// they're verified. getIdToken(true) mints a fresh token carrying the updated
-  /// claim, so the rules and the app agree.
+  /// reload() hanya memperbarui flag [User.emailVerified] di sisi klien. Namun
+  /// aturan keamanan Firestore membaca `email_verified` dari *token* ID, yang
+  /// disimpan di cache (~1 jam) dan TIDAK ikut disegarkan oleh reload(). Tanpa
+  /// memaksa token baru, pengguna yang baru terverifikasi tetap gagal pada setiap
+  /// penulisan yang memerlukan verifikasi (misal menambah obat) dengan error
+  /// permission-denied meski aplikasi mengira ia sudah terverifikasi.
+  /// getIdToken(true) membuat token baru yang membawa klaim terbaru, sehingga
+  /// aturan Firestore dan aplikasi menjadi selaras.
   Future<void> reloadCurrentUser() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -63,8 +65,8 @@ class AuthService {
     await _auth.currentUser?.getIdToken(true);
   }
 
-  /// Signs in with [email] and [password].
-  /// Throws [FirebaseAuthException] on failure (e.g. wrong password).
+  /// Masuk (login) dengan [email] dan [password].
+  /// Melempar [FirebaseAuthException] jika gagal (misal kata sandi salah).
   Future<User> login({
     required String email,
     required String password,
@@ -76,16 +78,16 @@ class AuthService {
     return credential.user!;
   }
 
-  /// Sends a password-reset email to [email].
-  /// Throws [FirebaseAuthException] on failure (e.g. user not found).
+  /// Mengirim email reset kata sandi ke [email].
+  /// Melempar [FirebaseAuthException] jika gagal (misal pengguna tidak ditemukan).
   Future<void> sendPasswordResetEmail(String email) {
     return _auth.sendPasswordResetEmail(email: email);
   }
 
-  /// Signs the current user out.
+  /// Mengeluarkan (logout) pengguna saat ini.
   Future<void> signOut() => _auth.signOut();
 
-  /// Maps a [FirebaseAuthException] to an Indonesian, user-facing message.
+  /// Memetakan [FirebaseAuthException] menjadi pesan berbahasa Indonesia yang ramah pengguna.
   static String messageFromException(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':

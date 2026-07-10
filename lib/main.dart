@@ -15,8 +15,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-/// Global navigator key so the alarm ring screen can be pushed from the
-/// top-level Alarm.ringing listener, independent of the current route.
+/// Navigator key global agar layar alarm berbunyi bisa ditampilkan dari
+/// listener Alarm.ringing di level teratas, tanpa bergantung pada rute yang
+/// sedang aktif.
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
@@ -25,11 +26,12 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await PreferenceHandler.init();
 
-  // Initialize notifications (which also initializes the ringing-alarm
-  // subsystem), then reschedule reminders only when a session is already
-  // restored — medicines now live in Firestore under the user's uid, so there's
-  // nothing to schedule until we know who is signed in. Wait for the first auth
-  // state (bounded, in case restoration stalls offline).
+  // Inisialisasi notifikasi (sekaligus menyiapkan subsistem alarm berbunyi),
+  // lalu jadwalkan ulang pengingat HANYA jika sesi login sudah dipulihkan.
+  // Data obat sekarang disimpan di Firestore berdasarkan uid pengguna, jadi
+  // tidak ada yang perlu dijadwalkan sampai kita tahu siapa yang sedang login.
+  // Tunggu status auth pertama (dibatasi waktu, untuk jaga-jaga jika pemulihan
+  // sesi macet saat offline).
   final notificationService = NotificationService();
   await notificationService.init();
 
@@ -37,11 +39,12 @@ void main() async {
       .authStateChanges()
       .first
       .timeout(const Duration(seconds: 5), onTimeout: () => null);
-  // Skip the startup reschedule while an alarm is already ringing — e.g. the app
-  // was cold-started by tapping the alarm's full-screen notification. Otherwise
-  // rescheduleAll()'s Alarm.stopAll() would silence that alarm before the ring
-  // screen even appears. The ring listener still shows it, and the ring screen
-  // re-arms the slot after the user acts (this only skips the one startup pass).
+  // Lewati penjadwalan ulang saat startup jika ada alarm yang sedang berbunyi —
+  // misalnya aplikasi baru dibuka dari nol karena pengguna menekan notifikasi
+  // alarm layar penuh. Jika tidak dilewati, Alarm.stopAll() di dalam
+  // rescheduleAll() akan mematikan alarm itu sebelum layar alarm sempat muncul.
+  // Listener alarm tetap menampilkannya, dan layar alarm menjadwalkan ulang
+  // slotnya setelah pengguna bertindak (ini hanya melewati satu proses startup).
   if (initialUser != null && !await Alarm.isRinging()) {
     await notificationService.rescheduleAll();
   }
@@ -57,12 +60,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  // Untyped generic: Alarm.ringing emits the package's internal AlarmSet, which
-  // isn't exported. Type inference in the listener handles it.
+  // Generic tanpa tipe eksplisit: Alarm.ringing mengeluarkan AlarmSet internal
+  // milik package yang tidak diekspor. Penentuan tipe di dalam listener yang
+  // menanganinya.
   StreamSubscription<Object?>? _ringSubscription;
 
-  /// Ids currently ringing, so each new ring pushes the screen exactly once
-  /// (the stream re-emits the whole set on every change).
+  /// Kumpulan ID alarm yang sedang berbunyi, supaya setiap alarm baru hanya
+  /// menampilkan layarnya tepat satu kali (stream memancarkan ulang seluruh set
+  /// setiap ada perubahan).
   Set<int> _ringingIds = {};
 
   @override
@@ -70,9 +75,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // When an alarm fires, bring up the full-screen ring UI. Uses the global
-    // navigator key so it works regardless of which screen is on top (or if the
-    // app was launched from the alarm's full-screen intent).
+    // Saat sebuah alarm berbunyi, tampilkan UI alarm layar penuh. Memakai
+    // navigator key global agar tetap berfungsi apa pun layar yang sedang aktif
+    // (atau jika aplikasi dibuka dari intent layar penuh milik alarm).
     _ringSubscription = Alarm.ringing.listen((alarmSet) {
       for (final settings in alarmSet.alarms) {
         if (_ringingIds.contains(settings.id)) continue;
@@ -95,13 +100,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Safety net for daily recurrence: re-arm upcoming alarms whenever the app
-    // returns to the foreground, so days aren't skipped if the app was killed.
+    // Pengaman untuk pengulangan harian: jadwalkan ulang alarm yang akan datang
+    // setiap aplikasi kembali ke depan (foreground), supaya tidak ada hari yang
+    // terlewat jika aplikasi sempat dimatikan paksa.
     //
-    // Skip while an alarm is ringing: rescheduleAll() calls Alarm.stopAll(),
-    // which would silence the alarm the user just opened the app to answer. The
-    // ring listener has already populated _ringingIds by the time we resume, and
-    // the ring screen re-arms that slot itself once the user acts.
+    // Dilewati saat ada alarm berbunyi: rescheduleAll() memanggil
+    // Alarm.stopAll(), yang akan mematikan alarm yang justru sedang ingin dijawab
+    // pengguna saat membuka aplikasi. Listener alarm sudah mengisi _ringingIds
+    // sebelum kita resume, dan layar alarm menjadwalkan ulang slotnya sendiri
+    // begitu pengguna bertindak.
     if (state == AppLifecycleState.resumed && _ringingIds.isEmpty) {
       AlarmService().rescheduleAll();
     }
@@ -126,7 +133,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         '/login': (context) => LoginPage(),
         '/dashboard': (context) => DashboardPage(),
       },
-      // home: const SplashScreen(),
+      // home: const SplashScreen(), // (dinonaktifkan) alternatif memakai home langsung
     );
   }
 }

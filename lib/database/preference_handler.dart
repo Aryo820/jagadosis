@@ -11,28 +11,29 @@ class PreferenceHandler {
   static const _keyUserEmail = "userEmail";
   static const _keyProfilePhoto = "profilePhoto";
 
-  // Data Diri Keys
+  // Key untuk Data Diri
   static const _keyUserBirthDate = "userBirthDate";
   static const _keyUserGender = "userGender";
   static const _keyUserBloodType = "userBloodType";
   static const _keyUserAllergies = "userAllergies";
 
-  // Notification Settings Keys
+  // Key untuk Pengaturan Notifikasi
   static const _keyNotificationGlobal = "notificationGlobal";
   static const _keyNotificationSound = "notificationSound";
   static const _keyNotificationVibration = "notificationVibration";
   static const _keyNotificationSnooze = "notificationSnooze";
-  // Alarm ringtone: [_keyAlarmSound] holds the value passed to the alarm plugin
-  // (a bundled `assets/...` path or an app-Documents-relative `alarm_sounds/...`
-  // path), while [_keyAlarmSoundName] is the label shown in the UI.
+  // Nada dering alarm: [_keyAlarmSound] menyimpan nilai yang dikirim ke plugin
+  // alarm (path bawaan `assets/...` atau path relatif terhadap folder Documents
+  // aplikasi `alarm_sounds/...`), sedangkan [_keyAlarmSoundName] adalah label
+  // yang ditampilkan di UI.
   static const _keyAlarmSound = "alarmSound";
   static const _keyAlarmSoundName = "alarmSoundName";
 
-  /// Default bundled ringtone, used when the user hasn't picked another sound.
+  /// Nada dering bawaan, dipakai saat pengguna belum memilih suara lain.
   static const String defaultAlarmSound = "assets/audio/ggmu.mp3";
   static const String defaultAlarmSoundName = "Bawaan (GGMU)";
 
-  // Emergency Contacts Keys
+  // Key untuk Kontak Darurat
   static const _keyEmergencyContacts = "emergencyContacts";
 
   static Future<void> setLogin(bool isLogin) async {
@@ -57,22 +58,22 @@ class PreferenceHandler {
     return _prefs.getString(_keyUserEmail) ?? '';
   }
 
-  /// Saves the absolute file path of the user's profile photo.
+  /// Menyimpan path absolut file foto profil pengguna.
   static Future<void> saveProfilePhoto(String path) async {
     await _prefs.setString(_keyProfilePhoto, path);
   }
 
-  /// Returns the stored profile photo path, or null if none is set.
+  /// Mengembalikan path foto profil yang tersimpan, atau null jika belum ada.
   static String? get profilePhoto {
     return _prefs.getString(_keyProfilePhoto);
   }
 
-  /// Removes the stored profile photo path.
+  /// Menghapus path foto profil yang tersimpan.
   static Future<void> removeProfilePhoto() async {
     await _prefs.remove(_keyProfilePhoto);
   }
 
-  // --- DATA DIRI HELPERS ---
+  // --- HELPER DATA DIRI ---
   static Future<void> saveBirthDate(String date) async => await _prefs.setString(_keyUserBirthDate, date);
   static String get userBirthDate => _prefs.getString(_keyUserBirthDate) ?? '';
 
@@ -85,7 +86,7 @@ class PreferenceHandler {
   static Future<void> saveAllergies(String allergies) async => await _prefs.setString(_keyUserAllergies, allergies);
   static String get userAllergies => _prefs.getString(_keyUserAllergies) ?? '';
 
-  // --- NOTIFICATION SETTINGS HELPERS ---
+  // --- HELPER PENGATURAN NOTIFIKASI ---
   static Future<void> setNotificationGlobal(bool value) async => await _prefs.setBool(_keyNotificationGlobal, value);
   static bool get notificationGlobal => _prefs.getBool(_keyNotificationGlobal) ?? true;
 
@@ -96,10 +97,10 @@ class PreferenceHandler {
   static bool get notificationVibration => _prefs.getBool(_keyNotificationVibration) ?? true;
 
   static Future<void> setNotificationSnooze(int minutes) async => await _prefs.setInt(_keyNotificationSnooze, minutes);
-  static int get notificationSnooze => _prefs.getInt(_keyNotificationSnooze) ?? 10; // Default 10 minutes
+  static int get notificationSnooze => _prefs.getInt(_keyNotificationSnooze) ?? 10; // Default 10 menit
 
-  /// Persists both the alarm ringtone path and its display label together, so
-  /// the scheduler and the UI never fall out of sync.
+  /// Menyimpan path nada dering alarm sekaligus label tampilannya bersamaan,
+  /// supaya penjadwal (scheduler) dan UI tidak pernah tidak sinkron.
   static Future<void> setAlarmSound(String path, String name) async {
     await _prefs.setString(_keyAlarmSound, path);
     await _prefs.setString(_keyAlarmSoundName, name);
@@ -108,7 +109,7 @@ class PreferenceHandler {
   static String get alarmSound => _prefs.getString(_keyAlarmSound) ?? defaultAlarmSound;
   static String get alarmSoundName => _prefs.getString(_keyAlarmSoundName) ?? defaultAlarmSoundName;
 
-  // --- EMERGENCY CONTACTS HELPERS ---
+  // --- HELPER KONTAK DARURAT ---
   static Future<void> saveEmergencyContacts(String jsonString) async => await _prefs.setString(_keyEmergencyContacts, jsonString);
   static String get emergencyContacts => _prefs.getString(_keyEmergencyContacts) ?? '[]';
 
@@ -117,17 +118,18 @@ class PreferenceHandler {
     await _prefs.remove(_keyUserName);
     await _prefs.remove(_keyUserEmail);
 
-    // Clear per-user PII too. These cache one account's medical profile and
-    // photo; leaving them behind would leak the previous user's data into the
-    // next account that signs in on a shared device. The durable copies live in
-    // Firestore and are pulled back into the cache on the next login.
+    // Hapus juga data pribadi (PII) per pengguna. Ini menyimpan cache profil
+    // medis dan foto satu akun; jika dibiarkan, data pengguna sebelumnya bisa
+    // bocor ke akun berikutnya yang login di perangkat bersama. Salinan
+    // permanennya ada di Firestore dan akan diambil lagi ke cache saat login
+    // berikutnya.
     await _prefs.remove(_keyProfilePhoto);
     await _prefs.remove(_keyUserBirthDate);
     await _prefs.remove(_keyUserGender);
     await _prefs.remove(_keyUserBloodType);
     await _prefs.remove(_keyUserAllergies);
 
-    // Notification settings (global/sound/vibration/snooze) are device-level
-    // preferences, not per-user data, so they intentionally persist.
+    // Pengaturan notifikasi (global/suara/getar/snooze) adalah preferensi tingkat
+    // perangkat, bukan data per pengguna, jadi sengaja dibiarkan tetap tersimpan.
   }
 }

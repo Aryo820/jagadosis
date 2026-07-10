@@ -10,13 +10,13 @@ import 'package:aplikasi/utils/email_verification_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// A single scheduled dose: one medicine at one of its scheduled times.
-/// A medicine taken twice a day produces two [_DoseSlot]s, each with its own
-/// status so they can be taken/missed independently.
+/// Satu jadwal dosis: satu obat pada salah satu jam terjadwalnya.
+/// Obat yang diminum dua kali sehari menghasilkan dua [_DoseSlot], masing-masing
+/// dengan status sendiri sehingga bisa ditandai diminum/terlewat secara terpisah.
 class _DoseSlot {
   final MedicineModel medicine;
   final int timeIndex;
-  final String time; // "HH:mm"
+  final String time; // format jam "HH:mm"
   final String status;
 
   _DoseSlot({
@@ -26,7 +26,8 @@ class _DoseSlot {
     required this.status,
   });
 
-  /// Minutes since midnight for this slot's time, or null if unparseable.
+  /// Jumlah menit sejak tengah malam untuk jam slot ini, atau null bila format
+  /// jamnya tidak bisa dibaca.
   int? get minutesOfDay {
     final parts = time.split(':');
     if (parts.length != 2) return null;
@@ -69,8 +70,8 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadData();
     _refreshVerificationStatus();
-    // Reload when a dose is confirmed elsewhere (e.g. the alarm ring screen) so
-    // the schedule updates without needing a bottom-nav tab switch.
+    // Muat ulang saat sebuah dosis dikonfirmasi dari tempat lain (mis. layar
+    // alarm berbunyi) supaya jadwal ikut ter-update tanpa perlu pindah tab.
     medicineDataRevision.addListener(_onMedicineDataChanged);
   }
 
@@ -84,8 +85,8 @@ class _HomePageState extends State<HomePage> {
     if (mounted) _loadData();
   }
 
-  /// Refreshes the account's verification status from the server so the banner
-  /// disappears on the next home visit once the user has clicked the link.
+  /// Memperbarui status verifikasi akun dari server, sehingga banner peringatan
+  /// hilang saat halaman home dibuka lagi setelah user mengeklik link verifikasi.
   Future<void> _refreshVerificationStatus() async {
     try {
       await _authService.reloadCurrentUser();
@@ -94,10 +95,10 @@ class _HomePageState extends State<HomePage> {
     setState(() => _emailVerified = _authService.isEmailVerified);
   }
 
-  /// Returns true if the dose slot at the given "HH:mm" time should be marked
-  /// as 'missed': its time already passed today AND it was due *after* the
-  /// medicine was created. A medicine added after today's slot time is not
-  /// instantly marked missed — it simply starts from its next occurrence.
+  /// Mengembalikan true jika slot dosis pada jam "HH:mm" tertentu harus ditandai
+  /// 'missed' (terlewat): jamnya sudah lewat hari ini DAN jadwalnya jatuh
+  /// *setelah* obat dibuat. Obat yang ditambahkan setelah jam slot hari ini tidak
+  /// langsung dianggap terlewat — cukup dimulai dari kemunculan berikutnya.
   bool _shouldMarkMissed(String hhmm, DateTime createdAt) {
     final parts = hhmm.split(':');
     if (parts.length != 2) return false;
@@ -111,7 +112,7 @@ class _HomePageState extends State<HomePage> {
     return slotToday.isBefore(now) && !slotToday.isBefore(createdAt);
   }
 
-  /// Flattens medicines into individual dose slots (one per scheduled time).
+  /// Memecah daftar obat menjadi slot-slot dosis individual (satu per jam terjadwal).
   List<_DoseSlot> _buildSlots(List<MedicineModel> medicines) {
     final slots = <_DoseSlot>[];
     for (final med in medicines) {
@@ -131,9 +132,10 @@ class _HomePageState extends State<HomePage> {
     return slots;
   }
 
-  /// Checks every pending dose slot and marks it as 'missed' if its scheduled
-  /// time has already passed. Each medicine is updated once (preserving the
-  /// status of its other slots) and one history entry is added per missed slot.
+  /// Memeriksa setiap slot dosis yang masih 'pending' dan menandainya 'missed'
+  /// bila jam jadwalnya sudah lewat. Tiap obat diperbarui sekali (status slot
+  /// lainnya tetap dipertahankan) dan satu entri riwayat ditambahkan per slot
+  /// yang terlewat.
   Future<void> _checkAndMarkMissed(List<MedicineModel> medicines) async {
     for (final med in medicines) {
       final statuses = med.slotStatuses;
@@ -202,8 +204,9 @@ class _HomePageState extends State<HomePage> {
       final times = med.scheduleTimes;
       final statuses = med.slotStatuses;
 
-      // Non-null only when a backfill is warranted; the null-check below both
-      // skips non-backfill cases and promotes the date for use as DateTime.
+      // Hanya berisi nilai (non-null) bila memang perlu mengisi ulang riwayat
+      // terlewat. Pengecekan null di bawah sekaligus melewati kasus yang tidak
+      // perlu diisi ulang dan menjadikan tanggal ini siap dipakai sebagai DateTime.
       final backfillDate = shouldBackfillMissedHistory ? statusDate : null;
 
       for (int i = 0; i < times.length; i++) {
@@ -244,22 +247,24 @@ class _HomePageState extends State<HomePage> {
     return updatedMedicines;
   }
 
-  /// Refreshes lists, calculates adherence progress, and determines the next
-  /// pending dose slot (earliest still-pending scheduled time).
+  /// Memperbarui daftar obat, menghitung persentase kepatuhan, dan menentukan
+  /// slot dosis berikutnya yang masih pending (jam terjadwal terdekat yang belum
+  /// dikerjakan).
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
     });
     try {
-      // First pass: detect and mark any overdue pending dose slots as missed
+      // Tahap pertama: deteksi dan tandai slot dosis pending yang sudah lewat
+      // jadwal sebagai terlewat (missed)
       final rawList = await _medicineRepo.getAllMedicines();
       final todayList = await _rollOverOldStatuses(rawList);
       await _checkAndMarkMissed(todayList);
 
-      // Re-fetch after possible status changes
+      // Ambil ulang data setelah kemungkinan ada perubahan status
       final list = await _medicineRepo.getAllMedicines();
 
-      // Expand into individual dose slots so each scheduled time is tracked.
+      // Uraikan menjadi slot dosis individual supaya tiap jam terjadwal terpantau.
       final slots = _buildSlots(list);
 
       int takenCount = 0;
@@ -269,7 +274,7 @@ class _HomePageState extends State<HomePage> {
         if (slot.status == 'taken') {
           takenCount++;
         } else if (slot.status == 'pending') {
-          // Pick the earliest pending slot by time of day.
+          // Pilih slot pending paling awal berdasarkan jam dalam sehari.
           if (nextPending == null ||
               (slot.minutesOfDay ?? 0) < (nextPending.minutesOfDay ?? 0)) {
             nextPending = slot;
@@ -277,11 +282,11 @@ class _HomePageState extends State<HomePage> {
         }
       }
 
-      // Adherence is the share of *all* of today's scheduled doses that have
-      // been taken. A dose that hasn't been marked taken yet — whether still
-      // pending or already missed — counts against the total, so the figure
-      // starts at 0% when a medicine is added and only rises once the user
-      // confirms "sudah diminum". With no doses scheduled at all it is 0%.
+      // Kepatuhan adalah persentase dari *seluruh* dosis terjadwal hari ini yang
+      // sudah diminum. Dosis yang belum ditandai diminum — baik masih pending
+      // maupun sudah terlewat — tetap dihitung sebagai pembagi, jadi angkanya
+      // mulai dari 0% saat obat ditambahkan dan baru naik setelah user menekan
+      // "sudah diminum". Kalau tidak ada dosis terjadwal sama sekali, nilainya 0%.
       final int totalCount = slots.length;
 
       setState(() {
@@ -299,17 +304,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// Marks a single dose slot as taken, logs it in consumption history, and
-  /// reloads state. Other scheduled times of the same medicine are untouched.
+  /// Menandai satu slot dosis sebagai diminum, mencatatnya ke riwayat konsumsi,
+  /// lalu memuat ulang tampilan. Jam terjadwal lain dari obat yang sama tidak
+  /// diubah.
   Future<void> _markSlotAsTaken(_DoseSlot slot) async {
-    // 1. Update only this slot's status, preserving the rest.
+    // 1. Perbarui status slot ini saja, status slot lainnya tetap dipertahankan.
     final updatedMed = slot.medicine.copyWithSlotStatus(
       slot.timeIndex,
       'taken',
     );
     await _medicineRepo.updateMedicine(updatedMed);
 
-    // 2. Add record to history table.
+    // 2. Tambahkan catatan ke tabel riwayat.
     final now = DateTime.now();
     final history = HistoryModel(
       id: '${now.millisecondsSinceEpoch}_${slot.medicine.id}_${slot.timeIndex}',
@@ -319,7 +325,7 @@ class _HomePageState extends State<HomePage> {
     );
     await _historyRepo.addHistory(history);
 
-    // 3. Reload state
+    // 3. Muat ulang tampilan
     await _loadData();
 
     if (!mounted) return;
@@ -334,7 +340,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Formats the current date in Indonesian layout.
+  /// Memformat tanggal hari ini dalam format Bahasa Indonesia.
   String _getFormattedDate() {
     final now = DateTime.now();
     const days = [
@@ -390,7 +396,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Greeting Section
+              // Bagian sapaan
               const SizedBox(height: 8.0),
               Text(
                 'Selamat ${_getGreeting()}, ${PreferenceHandler.userName}',
@@ -411,13 +417,13 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20.0),
 
-              // Email verification banner — only while the account is unverified.
+              // Banner verifikasi email — hanya muncul selagi akun belum diverifikasi.
               if (!_emailVerified) ...[
                 _buildVerificationBanner(),
                 const SizedBox(height: 20.0),
               ],
 
-              // Adherence Progress Section
+              // Bagian progres kepatuhan
               Container(
                 padding: const EdgeInsets.all(20.0),
                 decoration: BoxDecoration(
@@ -463,7 +469,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(width: 12.0),
-                    // Progress Circle
+                    // Lingkaran progres
                     SizedBox(
                       width: 64.0,
                       height: 64.0,
@@ -500,7 +506,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 24.0),
 
-              // Today's Schedule Card (Next Reminder)
+              // Kartu jadwal hari ini (pengingat berikutnya)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -540,9 +546,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Warning banner shown on the home screen while the account's email is not
-  /// yet verified. Explains why some features are locked and offers a one-tap
-  /// resend plus a way to re-check status after verifying in the browser.
+  /// Banner peringatan yang muncul di layar home selagi email akun belum
+  /// diverifikasi. Menjelaskan kenapa sebagian fitur terkunci, serta menyediakan
+  /// tombol kirim ulang sekali tap dan cara memeriksa ulang status setelah
+  /// verifikasi lewat browser.
   Widget _buildVerificationBanner() {
     const amber = Color(0xFF934700);
     return Container(
@@ -657,7 +664,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Card displayed when no medicines are added yet.
+  /// Kartu yang ditampilkan saat belum ada obat yang ditambahkan.
   Widget _buildNoMedicinesCard() {
     return Container(
       width: double.infinity,
@@ -706,7 +713,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Card displayed when all scheduled medicines are marked as taken.
+  /// Kartu yang ditampilkan saat semua obat terjadwal sudah ditandai diminum.
   Widget _buildAllTakenCard() {
     return Container(
       width: double.infinity,
@@ -750,7 +757,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Card displaying details of the next scheduled pending dose slot.
+  /// Kartu yang menampilkan detail slot dosis berikutnya yang masih pending.
   Widget _buildPendingMedCard(_DoseSlot slot) {
     final medicine = slot.medicine;
     final parts = medicine.dose.split(' • ');

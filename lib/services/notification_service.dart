@@ -9,10 +9,10 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Singleton service managing local notification scheduling for medication reminders.
-/// Schedules two notifications per medication time: 30 minutes and 15 minutes before.
+/// Layanan singleton yang mengatur penjadwalan notifikasi lokal untuk pengingat obat.
+/// Untuk setiap waktu minum obat, dijadwalkan dua notifikasi: 30 menit dan 15 menit sebelumnya.
 class NotificationService {
-  // Singleton pattern
+  // Pola singleton (hanya ada satu instance)
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
@@ -20,46 +20,48 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  /// The jam-H ringing alarm is delegated here. NotificationService stays the
-  /// single façade every call site uses, so wiring the alarm in at each choke
-  /// point keeps all schedule/cancel/reschedule flows in sync automatically.
+  /// Alarm berbunyi tepat pada jam-H didelegasikan ke sini. NotificationService
+  /// menjadi satu-satunya pintu (façade) yang dipakai semua pemanggil, jadi dengan
+  /// menautkan alarm di tiap titik penting, seluruh alur jadwal/batal/jadwal ulang
+  /// otomatis selalu selaras.
   final AlarmService _alarmService = AlarmService();
 
-  /// Android notification channel details
+  /// Detail channel notifikasi Android
   ///
-  /// [_channelIdBase] is only a prefix: the actual channel id encodes the
-  /// sound/vibration preference (see [_channelIdFor]). On Android 8+ a channel's
-  /// alert behaviour is fixed at creation, so using one channel per combination
-  /// is the reliable way to make the sound/vibration toggles take effect when
-  /// they change — a plain per-notification flag would be ignored.
+  /// [_channelIdBase] hanyalah awalan (prefix): id channel sebenarnya menyertakan
+  /// preferensi suara/getar (lihat [_channelIdFor]). Pada Android 8+ perilaku
+  /// peringatan sebuah channel dikunci saat channel dibuat, jadi memakai satu
+  /// channel untuk tiap kombinasi adalah cara andal agar tombol suara/getar
+  /// benar-benar berefek saat diubah — sekadar flag per-notifikasi akan diabaikan.
   static const String _channelIdBase = 'jagadosis_reminders';
   static const String _channelName = 'Pengingat Obat';
   static const String _channelDescription =
       'Notifikasi pengingat untuk minum obat tepat waktu';
 
-  /// Channel id for a given alert configuration.
+  /// Id channel untuk konfigurasi peringatan tertentu (suara/getar).
   String _channelIdFor(bool sound, bool vibration) =>
       '${_channelIdBase}_s${sound ? 1 : 0}_v${vibration ? 1 : 0}';
 
-  /// Reminder offsets in minutes before scheduled medication time
+  /// Selisih waktu pengingat (dalam menit) sebelum jadwal minum obat
   static const List<int> _reminderOffsets = [30, 15];
 
-  /// Maximum number of schedule times supported per medicine. Bounds both the
-  /// notification-id encoding and the cancel sweep, so reducing a medicine's
-  /// frequency (e.g. 4x → 2x) still clears its previously scheduled reminders.
-  /// The UI currently allows up to 4; the headroom keeps ids stable if it grows.
+  /// Jumlah maksimum waktu jadwal yang didukung per obat. Membatasi baik
+  /// penyusunan id-notifikasi maupun proses pembersihan (cancel), sehingga saat
+  /// frekuensi sebuah obat dikurangi (misal 4x → 2x), pengingat lama yang sudah
+  /// dijadwalkan tetap ikut dibersihkan. UI saat ini memperbolehkan hingga 4;
+  /// cadangan ini menjaga id tetap stabil bila nanti jumlahnya bertambah.
   static const int _maxScheduleTimes = 8;
 
-  /// Initializes the notification plugin, timezone data, and Android channel.
-  /// Must be called once before any scheduling, typically in main().
+  /// Menginisialisasi plugin notifikasi, data timezone, dan channel Android.
+  /// Harus dipanggil sekali sebelum penjadwalan apa pun, biasanya di main().
   Future<void> init() async {
-    // Initialize timezone database
+    // Inisialisasi database timezone
     tz.initializeTimeZones();
-    // flutter_timezone v5 returns a TimezoneInfo; use its IANA identifier.
+    // flutter_timezone v5 mengembalikan TimezoneInfo; pakai identifier IANA-nya.
     final timezoneInfo = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
 
-    // Android initialization settings
+    // Pengaturan inisialisasi untuk Android
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
@@ -68,7 +70,7 @@ class NotificationService {
 
     await _plugin.initialize(settings: initSettings);
 
-    // Request notification permissions on Android 13+
+    // Minta izin notifikasi pada Android 13+
     final androidPlugin = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -78,26 +80,26 @@ class NotificationService {
       await androidPlugin.requestExactAlarmsPermission();
     }
 
-    // Initialize the ringing-alarm subsystem alongside notifications.
+    // Inisialisasi juga subsistem alarm berbunyi bersama notifikasi.
     await _alarmService.init();
   }
 
-  /// Schedules reminder notifications for a single medicine.
-  /// Creates 2 notifications per schedule time (30 min and 15 min before).
-  /// Only schedules if [medicine.enableNotification] is true.
+  /// Menjadwalkan notifikasi pengingat untuk satu obat.
+  /// Membuat 2 notifikasi per waktu jadwal (30 menit dan 15 menit sebelumnya).
+  /// Hanya dijadwalkan jika [medicine.enableNotification] bernilai true.
   Future<void> scheduleForMedicine(MedicineModel medicine) async {
-    // Also arm the jam-H ringing alarm. AlarmService applies the same
-    // per-medicine and global gates internally.
+    // Aktifkan juga alarm berbunyi jam-H. AlarmService menerapkan pembatasan
+    // per-obat dan pembatasan global yang sama secara internal.
     await _alarmService.scheduleForMedicine(medicine);
 
-    // Honour both the per-medicine switch and the global reminder toggle. This
-    // is the single choke point for scheduling, so gating here also covers
-    // rescheduleAll() and the add/edit-medicine flow.
+    // Hormati sakelar per-obat maupun sakelar pengingat global. Ini adalah satu-
+    // satunya titik utama penjadwalan, jadi pengecekan di sini juga mencakup
+    // rescheduleAll() serta alur tambah/edit obat.
     if (!medicine.enableNotification) return;
     if (!PreferenceHandler.notificationGlobal) return;
 
-    // Resolve the alert preferences once; they select the channel and are also
-    // set on the notification so both agree.
+    // Ambil preferensi peringatan sekali saja; nilai ini memilih channel dan
+    // sekaligus dipasang pada notifikasi agar keduanya konsisten.
     final bool soundOn = PreferenceHandler.notificationSound;
     final bool vibrationOn = PreferenceHandler.notificationVibration;
     final String channelId = _channelIdFor(soundOn, vibrationOn);
@@ -126,10 +128,10 @@ class NotificationService {
         final offsetMinutes = _reminderOffsets[offsetIndex];
         final notificationId = _generateId(medicine.id, timeIndex, offsetIndex);
 
-        // Calculate the notification time
+        // Hitung waktu munculnya notifikasi
         final scheduledDate = _nextInstanceOfTime(hour, minute, offsetMinutes);
 
-        // Title and body vary by offset
+        // Judul dan isi berbeda tergantung selisih waktunya
         final String title;
         final String body;
         if (offsetMinutes == 30) {
@@ -156,9 +158,10 @@ class NotificationService {
                 importance: Importance.high,
                 priority: Priority.high,
                 icon: '@mipmap/ic_launcher',
-                // Kept consistent with the channel picked above; the settings
-                // page reschedules when these change so a different channel
-                // (with the new behaviour) is used for upcoming reminders.
+                // Dibuat konsisten dengan channel yang dipilih di atas; halaman
+                // pengaturan menjadwalkan ulang saat nilai ini berubah, sehingga
+                // channel berbeda (dengan perilaku baru) dipakai untuk pengingat
+                // berikutnya.
                 enableVibration: vibrationOn,
                 playSound: soundOn,
               ),
@@ -178,14 +181,15 @@ class NotificationService {
     }
   }
 
-  /// Cancels all scheduled notifications for a given medicine ID.
+  /// Membatalkan semua notifikasi terjadwal untuk ID obat tertentu.
   Future<void> cancelForMedicine(String medicineId) async {
-    // Clear the medicine's ringing alarms too.
+    // Hapus juga alarm berbunyi milik obat tersebut.
     await _alarmService.cancelForMedicine(medicineId);
 
-    // Sweep every possible slot (max supported times × offsets). Using the full
-    // range — rather than the medicine's *current* time count — ensures a
-    // medicine edited down to fewer times still has its old reminders cleared.
+    // Sapu setiap slot yang mungkin (maksimum waktu yang didukung × selisih).
+    // Memakai rentang penuh — bukan jumlah waktu obat *saat ini* — memastikan
+    // obat yang diedit menjadi lebih sedikit waktunya tetap terbersihkan
+    // pengingat lamanya.
     for (int timeIndex = 0; timeIndex < _maxScheduleTimes; timeIndex++) {
       for (
         int offsetIndex = 0;
@@ -201,35 +205,36 @@ class NotificationService {
     );
   }
 
-  /// Cancels every scheduled notification on the device.
+  /// Membatalkan seluruh notifikasi terjadwal di perangkat.
   ///
-  /// Called on sign-out so one user's reminders never linger for the next
-  /// account signing in on a shared device.
+  /// Dipanggil saat logout agar pengingat milik satu pengguna tidak tertinggal
+  /// untuk akun berikutnya yang login di perangkat yang sama.
   Future<void> cancelAll() async {
     await _alarmService.cancelAll();
     await _plugin.cancelAll();
     log('NotificationService: Cancelled all notifications');
   }
 
-  /// Reschedules notifications for all medicines in the database.
-  /// Cancels all existing notifications first, then re-creates them.
-  /// Should be called on app startup.
+  /// Menjadwalkan ulang notifikasi untuk semua obat di database.
+  /// Membatalkan semua notifikasi yang ada terlebih dahulu, lalu membuatnya kembali.
+  /// Sebaiknya dipanggil saat aplikasi dimulai.
   Future<void> rescheduleAll() async {
     await _plugin.cancelAll();
-    // Clear stale ringing alarms; the loop below re-arms them per medicine via
-    // scheduleForMedicine (which delegates to AlarmService).
+    // Bersihkan alarm berbunyi yang usang; perulangan di bawah mengaktifkannya
+    // kembali per obat lewat scheduleForMedicine (yang mendelegasikan ke AlarmService).
     await _alarmService.cancelAll();
 
-    // Never let a data-layer failure propagate: this runs at app startup and
-    // right after login, where an unhandled throw would break launch or the
-    // sign-in flow. A failed fetch simply means no reminders this pass.
+    // Jangan pernah biarkan kegagalan di lapisan data menyebar: fungsi ini berjalan
+    // saat aplikasi dimulai dan tepat setelah login, di mana error yang tak tertangani
+    // bisa merusak proses buka aplikasi atau alur login. Jika pengambilan data gagal,
+    // artinya cukup tidak ada pengingat pada putaran ini.
     try {
       final repo = MedicineRepository();
       final medicines = await repo.getAllMedicines();
 
       for (final medicine in medicines) {
-        // scheduleForMedicine itself gates on the per-medicine and global
-        // toggles, so no need to re-check enableNotification here.
+        // scheduleForMedicine sudah melakukan pengecekan pada sakelar per-obat
+        // dan global, jadi tidak perlu memeriksa enableNotification lagi di sini.
         await scheduleForMedicine(medicine);
       }
 
@@ -242,32 +247,34 @@ class NotificationService {
     }
   }
 
-  /// Generates a unique notification ID based on medicine ID, time index,
-  /// and offset index. Uses hashCode to convert string ID to int.
+  /// Menghasilkan ID notifikasi unik berdasarkan ID obat, indeks waktu, dan
+  /// indeks selisih. Memakai hashCode untuk mengubah ID string menjadi int.
   int _generateId(String medicineId, int timeIndex, int offsetIndex) {
-    // Reserve `slotSpace` consecutive ids per medicine — one for every
-    // (time × offset) combination — so a medicine's own reminders never clash.
+    // Sisihkan `slotSpace` id berurutan untuk tiap obat — satu untuk setiap
+    // kombinasi (waktu × selisih) — agar pengingat milik satu obat tidak
+    // pernah bertabrakan.
     final int slotSpace = _maxScheduleTimes * _reminderOffsets.length;
     final int slotIndex = timeIndex * _reminderOffsets.length + offsetIndex;
 
-    // Hash the medicine id into a base, spreading medicines across the full
-    // positive 32-bit range Android notification ids allow. This widens the
-    // id space ~1300x vs. the old %100000, making cross-medicine collisions
-    // (which would silently overwrite another medicine's reminders) negligible.
-    // base * slotSpace + slotIndex stays <= 2^31-1 by construction.
+    // Hash-kan id obat menjadi nilai dasar (base), menyebarkan obat-obat ke
+    // seluruh rentang 32-bit positif yang diizinkan untuk id notifikasi Android.
+    // Ini memperluas ruang id ~1300x dibanding %100000 yang lama, sehingga
+    // tabrakan antar-obat (yang bisa diam-diam menimpa pengingat obat lain)
+    // menjadi sangat kecil kemungkinannya.
+    // base * slotSpace + slotIndex dijamin tetap <= 2^31-1 secara konstruksi.
     final int base = medicineId.hashCode.abs() % (0x7FFFFFFF ~/ slotSpace);
     return base * slotSpace + slotIndex;
   }
 
-  /// Calculates the next TZDateTime instance for [hour]:[minute] minus
-  /// [offsetMinutes]. If the resulting time has already passed today,
-  /// returns the same time tomorrow.
+  /// Menghitung TZDateTime berikutnya untuk [hour]:[minute] dikurangi
+  /// [offsetMinutes]. Jika waktu hasilnya sudah lewat hari ini, mengembalikan
+  /// waktu yang sama untuk besok.
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute, int offsetMinutes) {
     final now = tz.TZDateTime.now(tz.local);
 
     int totalMinutes = hour * 60 + minute - offsetMinutes;
 
-    // Normalize ke 0-1439 range (wrap around midnight safely)
+    // Normalkan ke rentang 0-1439 (melewati tengah malam dengan aman)
     // Dengan ini, 00:10 - 30 menit = -20 -> +1440 = 1420 (23:40)
     while (totalMinutes < 0) {
       totalMinutes += 24 * 60;
@@ -284,7 +291,7 @@ class NotificationService {
       adjustedMinute,
     );
 
-    // If the time has already passed today, schedule for tomorrow
+    // Jika waktunya sudah lewat hari ini, jadwalkan untuk besok
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }

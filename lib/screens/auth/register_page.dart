@@ -28,8 +28,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   bool _agreedToPolicy = false;
 
-  // Held as fields (not created inline in build) so they can be disposed and
-  // aren't rebuilt on every setState.
+  // Disimpan sebagai field kelas (bukan dibuat langsung di dalam build) agar
+  // bisa di-dispose dengan benar dan tidak dibuat ulang setiap kali setState.
   late final TapGestureRecognizer _policyTapRecognizer =
       TapGestureRecognizer()
         ..onTap = () => context.push(const PrivacyPolicyPage());
@@ -50,10 +50,11 @@ class _RegisterPageState extends State<RegisterPage> {
         password: _passwordController.text,
       );
 
-      // Seed the Firestore profile document while still authenticated (the
-      // security rules require the write to come from the account itself).
-      // The register button is gated on _agreedToPolicy, so recording the
-      // accepted policy version here captures a truthful consent trail.
+      // Buat dokumen profil awal di Firestore selagi pengguna masih login
+      // (aturan keamanan mengharuskan penulisan dilakukan oleh akun itu
+      // sendiri). Tombol daftar hanya aktif jika _agreedToPolicy bernilai true,
+      // jadi mencatat versi kebijakan yang disetujui di sini menghasilkan jejak
+      // persetujuan yang benar.
       await _profileService.createInitial(
         name: name,
         email: email,
@@ -61,9 +62,9 @@ class _RegisterPageState extends State<RegisterPage> {
         termsVersion: termsVersion,
       );
 
-      // Firebase signs the new account in automatically. Sign back out so the
-      // app state stays consistent with the "please log in" UX below (and so
-      // AuthGate doesn't jump straight to the dashboard on the next launch).
+      // Firebase otomatis login-kan akun baru. Logout lagi agar kondisi aplikasi
+      // tetap konsisten dengan alur "silakan login" di bawah (dan supaya AuthGate
+      // tidak langsung membuka dashboard saat aplikasi dibuka berikutnya).
       await _authService.signOut();
 
       if (!mounted) return;
@@ -77,7 +78,7 @@ class _RegisterPageState extends State<RegisterPage> {
           duration: Duration(seconds: 6),
         ),
       );
-      Navigator.pop(context); // Go back to login page
+      Navigator.pop(context); // Kembali ke halaman login
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +109,7 @@ class _RegisterPageState extends State<RegisterPage> {
       backgroundColor: AppColors.backgroundBlue,
       body: Stack(
         children: [
-          // Subtle top gradient background decoration
+          // Dekorasi latar belakang gradasi halus di bagian atas
           Positioned(
             top: 0,
             left: 0,
@@ -124,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
-          // Main Content Area
+          // Area konten utama
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -135,7 +136,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Brand / Logo Area
+                    // Area merek / logo
                     const SizedBox(height: 12.0),
                     Text(
                       'JagaDosis',
@@ -158,7 +159,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 24.0),
 
-                    // Registration Card
+                    // Kartu formulir registrasi
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -193,7 +194,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             const SizedBox(height: 24.0),
 
-                            // Full Name Field
+                            // Kolom nama lengkap
                             Text(
                               'Nama Lengkap',
                               style: GoogleFonts.inter(
@@ -255,7 +256,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             const SizedBox(height: 16.0),
 
-                            // Email Field
+                            // Kolom email
                             Text(
                               'Email',
                               style: GoogleFonts.inter(
@@ -322,7 +323,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             const SizedBox(height: 16.0),
 
-                            // Password Field
+                            // Kolom kata sandi
                             Text(
                               'Kata Sandi',
                               style: GoogleFonts.inter(
@@ -402,7 +403,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                             const SizedBox(height: 16.0),
 
-                            // Privacy policy consent
+                            // Persetujuan kebijakan privasi
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -466,7 +467,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                             const SizedBox(height: 24.0),
 
-                            // Register Button
+                            // Tombol daftar
                             SizedBox(
                               width: double.infinity,
                               height: 52.0,
@@ -519,7 +520,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             const SizedBox(height: 16.0),
 
-                            // Switch to Login Link
+                            // Tautan untuk pindah ke halaman login
                             Center(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,

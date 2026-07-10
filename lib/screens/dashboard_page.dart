@@ -22,17 +22,17 @@ class _DashboardPageState extends State<DashboardPage> {
         return HomePage(
           onAddMedTap: () {
             setState(() {
-              _selectedIndex = 2; // Navigate to Meds
+              _selectedIndex = 2; // Pindah ke tab Obat
             });
           },
           onHistoryTap: () {
             setState(() {
-              _selectedIndex = 1; // Navigate to History
+              _selectedIndex = 1; // Pindah ke tab Riwayat
             });
           },
           onFamilyTap: () {
             setState(() {
-              _selectedIndex = 3; // Navigate to Profile
+              _selectedIndex = 3; // Pindah ke tab Profil
             });
           },
         );

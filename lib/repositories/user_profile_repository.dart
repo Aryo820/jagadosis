@@ -2,12 +2,12 @@ import 'package:aplikasi/models/user_profile_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Reads and writes the signed-in user's profile document in Cloud Firestore.
+/// Membaca dan menulis dokumen profil milik user yang sedang login di Cloud Firestore.
 ///
-/// The document lives at `users/{uid}`, keyed by the Firebase Auth uid so each
-/// account only ever touches its own data (enforced by security rules). All
-/// operations no-op / return null when there is no authenticated user, so
-/// callers don't have to guard against the signed-out case themselves.
+/// Dokumennya berada di path `users/{uid}`, memakai uid dari Firebase Auth sebagai
+/// kunci, sehingga tiap akun hanya bisa mengakses datanya sendiri (dijamin oleh
+/// security rules). Semua operasi tidak melakukan apa-apa / mengembalikan null jika
+/// tidak ada user yang login, jadi pemanggil tidak perlu mengecek sendiri kondisi belum-login.
 class UserProfileRepository {
   UserProfileRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
     : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -18,15 +18,15 @@ class UserProfileRepository {
 
   static const String _collection = 'users';
 
-  /// The current user's profile document reference, or null when signed out.
+  /// Referensi dokumen profil milik user yang sedang login, atau null jika belum login.
   DocumentReference<Map<String, dynamic>>? get _docRef {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
     return _firestore.collection(_collection).doc(uid);
   }
 
-  /// Fetches the current user's profile, or null if signed out or not yet
-  /// created. Firestore's offline cache serves this when the device is offline.
+  /// Mengambil profil user yang sedang login, atau null jika belum login atau
+  /// profilnya belum dibuat. Saat perangkat offline, data diambil dari cache Firestore.
   Future<UserProfile?> fetch() async {
     final ref = _docRef;
     if (ref == null) return null;
@@ -37,9 +37,10 @@ class UserProfileRepository {
     return UserProfile.fromMap(data);
   }
 
-  /// Creates or updates the current user's profile. Uses merge so callers can
-  /// save a partial profile (e.g. just name/email at registration) without
-  /// clobbering fields filled in later. No-op when signed out.
+  /// Membuat atau memperbarui profil user yang sedang login. Memakai mode merge
+  /// supaya pemanggil bisa menyimpan sebagian data profil saja (misal hanya nama/email
+  /// saat registrasi) tanpa menimpa field lain yang diisi belakangan. Tidak melakukan
+  /// apa-apa jika belum login.
   Future<void> save(UserProfile profile) async {
     final ref = _docRef;
     if (ref == null) return;
